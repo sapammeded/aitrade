@@ -118,9 +118,26 @@ const PROVIDERS = {
       {id:"qwen/qwen3-235b-a22b:free",           label:"Qwen3 235B 🆓",       vision:false},
     ],
   },
+  chatgpt: {
+    id: "chatgpt",
+    name: "ChatGPT",
+    icon: "🟢",
+    color: "#10a37f",
+    baseUrl: "https://api.openai.com/v1/chat/completions",
+    keyPrefix: "sk-",
+    keyPlaceholder: "sk-...",
+    keyUrl: "platform.openai.com/api-keys",
+    keyNote: "Create new secret key",
+    models: [
+      {id:"gpt-4o",          label:"GPT-4o (Vision)",       vision:true},
+      {id:"gpt-4o-mini",     label:"GPT-4o Mini (Vision)",  vision:true},
+      {id:"gpt-4-turbo",     label:"GPT-4 Turbo (Vision)",  vision:true},
+      {id:"gpt-3.5-turbo",   label:"GPT-3.5 Turbo",         vision:false},
+    ],
+  },
 };
 
-const PROVIDER_ORDER = ["gemini","groq","openrouter"];
+const PROVIDER_ORDER = ["chatgpt","gemini","groq","openrouter"];
 
 // ─── QUICK PROMPTS ────────────────────────────────────────────────────────────
 const QUICK_PROMPTS = [
@@ -134,7 +151,7 @@ const QUICK_PROMPTS = [
 
 const IMAGE_TYPES = ["image/jpeg","image/png","image/gif","image/webp","image/bmp"];
 const MAX_SIZE = 20 * 1024 * 1024;
-const STORAGE_KEY = "gip_v5_providers"; // { gemini:{key,model}, groq:{key,model}, openrouter:{key,model}, activeProvider }
+const STORAGE_KEY = "gip_v6_providers"; // { gemini:{key,model}, groq:{key,model}, openrouter:{key,model}, chatgpt:{key,model}, activeProvider }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function getIcon(type) {
@@ -252,7 +269,7 @@ function ProviderBadge({provId, prov, cfg, status, onClick}) {
 
 // ─── SETTINGS MODAL ───────────────────────────────────────────────────────────
 function SettingsModal({configs, onSave, onClose}) {
-  const [tab, setTab] = useState("gemini");
+  const [tab, setTab] = useState("chatgpt");
   const [draft, setDraft] = useState(() => {
     const d = {};
     for (const pid of PROVIDER_ORDER) {
@@ -277,7 +294,7 @@ function SettingsModal({configs, onSave, onClose}) {
         <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap"}}>
           {PROVIDER_ORDER.map(pid=>(
             <button key={pid} onClick={()=>setTab(pid)}
-              style={{flex:1,padding:"8px 6px",borderRadius:10,background:tab===pid?`rgba(${pid==="gemini"?"66,133,244":pid==="groq"?"249,115,22":"139,92,246"},.15)`:"rgba(13,20,36,.8)",border:tab===pid?`1px solid ${cur.color}`:"1px solid #1c2740",color:tab===pid?"#e7ecf7":"#8893ad",cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",fontSize:10,transition:"all .15s",minWidth:80}}
+              style={{flex:1,padding:"8px 6px",borderRadius:10,background:tab===pid?`rgba(${pid==="gemini"?"66,133,244":pid==="groq"?"249,115,22":pid==="openrouter"?"139,92,246":"16,163,127"},.15)`:"rgba(13,20,36,.8)",border:tab===pid?`1px solid ${PROVIDERS[pid].color}`:"1px solid #1c2740",color:tab===pid?"#e7ecf7":"#8893ad",cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",fontSize:10,transition:"all .15s",minWidth:70}}
             >
               <div style={{fontSize:16,marginBottom:2}}>{PROVIDERS[pid].icon}</div>
               <div>{PROVIDERS[pid].name}</div>
@@ -348,7 +365,7 @@ function App() {
   });
   const [activeProvider, setActiveProvider] = useState(()=>{
     const s = loadStorage();
-    return s.activeProvider || "gemini";
+    return s.activeProvider || "chatgpt";
   });
   const [providerStatus, setProviderStatus] = useState({}); // pid -> "ok"|"warn"|"err"|"idle"
   const [showSettings, setShowSettings] = useState(false);
@@ -625,7 +642,7 @@ function App() {
             <div>Daftarkan beberapa API key dari provider berbeda.</div>
             <div>Jika satu provider kena rate limit → <span style={{color:"#22d3ee"}}>otomatis ganti</span> ke provider berikutnya.</div>
             <div style={{marginTop:8,color:"#8893ad",fontSize:11}}>
-              <span style={{color:"#4285f4"}}>🟦 Gemini</span> → <span style={{color:"#f97316"}}>⚡ Groq</span> → <span style={{color:"#8b5cf6"}}>🔀 OpenRouter</span>
+              <span style={{color:"#10a37f"}}>🟢 ChatGPT</span> → <span style={{color:"#4285f4"}}>🟦 Gemini</span> → <span style={{color:"#f97316"}}>⚡ Groq</span> → <span style={{color:"#8b5cf6"}}>🔀 OpenRouter</span>
             </div>
           </div>
 
@@ -688,26 +705,22 @@ function App() {
             </div>
           </div>
 
-          {/* Provider pills */}
-          <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center",flex:1,overflow:"hidden"}}>
-            {PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8).map(pid=>(
-              <button
-                key={pid}
-                onClick={()=>{ setActiveProvider(pid); saveStorage({...configs,activeProvider:pid}); }}
-                title={PROVIDERS[pid].name}
-                style={{
-                  display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:6,
-                  background:pid===activeProvider?"rgba(34,211,238,.12)":"rgba(13,20,36,.8)",
-                  border:`1px solid ${pid===activeProvider?"#22d3ee":"#1c2740"}`,
-                  cursor:"pointer",fontSize:10,fontFamily:"'JetBrains Mono',monospace",
-                  color:pid===activeProvider?"#22d3ee":"#8893ad",transition:"all .15s",whiteSpace:"nowrap"
-                }}
-              >
-                <div className={`status-dot ${providerStatus[pid]==="ok"?"status-ok":providerStatus[pid]==="warn"?"status-warn":providerStatus[pid]==="err"?"status-err":"status-idle"}`}/>
-                <span>{PROVIDERS[pid].icon}</span>
-                <span style={{display:window.innerWidth>480?"inline":"none"}}>{PROVIDERS[pid].name}</span>
-              </button>
-            ))}
+          {/* ACTIVE AI BADGE — center, always visible */}
+          <div style={{flex:1,display:"flex",justifyContent:"center"}}>
+            <div style={{
+              display:"flex",alignItems:"center",gap:6,
+              background:`rgba(${curProv.color==="#4285f4"?"66,133,244":curProv.color==="#f97316"?"249,115,22":curProv.color==="#8b5cf6"?"139,92,246":"16,163,127"},.15)`,
+              border:`1.5px solid ${curProv.color}`,
+              borderRadius:999,padding:"4px 12px",
+              fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:600,
+              color:curProv.color,whiteSpace:"nowrap",
+              boxShadow:`0 0 12px ${curProv.color}33`
+            }}>
+              <span style={{fontSize:14}}>{curProv.icon}</span>
+              <span>{curProv.name}</span>
+              <span style={{fontSize:9,opacity:.7,color:"#e7ecf7"}}>· {configs[activeProvider]?.model?.split("/").pop()||""}</span>
+              <div style={{width:6,height:6,borderRadius:"50%",background:"#2fe6a4",animation:"pulse 2s infinite",flexShrink:0}}/>
+            </div>
           </div>
 
           {/* Right controls */}
@@ -717,6 +730,33 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* PROVIDER SWITCHER STRIP */}
+      {PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8).length > 1 && (
+        <div style={{padding:"5px 12px",borderBottom:"1px solid #0d1424",background:"rgba(7,11,20,.98)",display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",flexShrink:0}}>
+          {PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8).map(pid=>{
+            const p = PROVIDERS[pid];
+            const isActive = pid === activeProvider;
+            return (
+              <button key={pid}
+                onClick={()=>{ setActiveProvider(pid); saveStorage({...configs,activeProvider:pid}); }}
+                style={{
+                  display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:7,flexShrink:0,
+                  background:isActive?`rgba(${p.color==="#4285f4"?"66,133,244":p.color==="#f97316"?"249,115,22":p.color==="#8b5cf6"?"139,92,246":"16,163,127"},.18)`:"rgba(13,20,36,.8)",
+                  border:`1px solid ${isActive?p.color:"#1c2740"}`,
+                  color:isActive?p.color:"#4a5568",cursor:"pointer",
+                  fontFamily:"'JetBrains Mono',monospace",fontSize:10,transition:"all .15s",whiteSpace:"nowrap"
+                }}
+              >
+                <div className={`status-dot ${providerStatus[pid]==="ok"?"status-ok":providerStatus[pid]==="warn"?"status-warn":providerStatus[pid]==="err"?"status-err":isActive?"status-ok":"status-idle"}`}/>
+                <span style={{fontSize:12}}>{p.icon}</span>
+                <span style={{fontWeight:isActive?700:400}}>{p.name}</span>
+                {isActive && <span style={{fontSize:8,background:p.color,color:"#070b14",borderRadius:3,padding:"1px 4px",fontWeight:700}}>AKTIF</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* CHAT */}
       <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
@@ -809,7 +849,7 @@ function App() {
             />
             <button className="send-btn" onClick={()=>sendMessage()} disabled={!canSend} style={{width:34,height:34,borderRadius:9,flexShrink:0,background:"rgba(34,211,238,.12)",border:"1px solid rgba(34,211,238,.3)",color:"#22d3ee",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,transition:"all .15s"}}>↑</button>
           </div>
-          <div style={{textAlign:"center",marginTop:7,fontSize:9.5,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace"}}>DISIPLIN PADA SOP &gt; FEELING — Auto-fallback: {PROVIDER_ORDER.filter(p=>configs[p]?.key?.length>8).map(p=>PROVIDERS[p].icon).join(" → ") || "belum setup"}</div>
+          <div style={{textAlign:"center",marginTop:7,fontSize:9.5,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace"}}>DISIPLIN PADA SOP &gt; FEELING — Auto-fallback: {PROVIDER_ORDER.filter(p=>configs[p]?.key?.length>8).map(p=>PROVIDERS[p].icon+" "+PROVIDERS[p].name).join(" → ") || "belum setup"}</div>
         </div>
       </div>
 
