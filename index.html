@@ -3,36 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GIP MASTER AI — Multi Provider v5</title>
+<title>GIP MASTER AI</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#070b14;color:#e7ecf7;font-family:'Inter',sans-serif;overflow:hidden;height:100vh}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1c2740;border-radius:4px}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,230,164,.55)}70%{box-shadow:0 0 0 6px rgba(47,230,164,0)}100%{box-shadow:0 0 0 0 rgba(47,230,164,0)}}
-@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-6px);opacity:1}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:#08090d;
+  --surface:#0e1117;
+  --surface-2:#131720;
+  --surface-3:#181e2a;
+  --border:#1e2535;
+  --border-subtle:#161b26;
+  --border-focus:#2d3a52;
+  --text-primary:#f0f2f7;
+  --text-secondary:#8892a4;
+  --text-tertiary:#4a5568;
+  --text-muted:#2d3748;
+  --accent:#3b82f6;
+  --accent-glow:rgba(59,130,246,.15);
+  --accent-border:rgba(59,130,246,.3);
+  --green:#10b981;
+  --green-glow:rgba(16,185,129,.12);
+  --green-border:rgba(16,185,129,.25);
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --r8:8px;
+  --r12:12px;
+  --r16:16px;
+  --r24:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 16px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.3);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.6),0 4px 12px rgba(0,0,0,.4);
+  --shadow-xl:0 24px 64px rgba(0,0,0,.7),0 8px 24px rgba(0,0,0,.5);
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-in-out:cubic-bezier(.4,0,.2,1);
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--font);color:var(--text-primary);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-focus)}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse-dot{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 5px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+@keyframes bounce-dot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.quick-btn:hover{border-color:rgba(34,211,238,.5)!important;color:#e7ecf7!important;background:rgba(34,211,238,.08)!important}
-.send-btn:hover:not(:disabled){background:rgba(34,211,238,.25)!important}
-.send-btn:disabled{opacity:.4;cursor:not-allowed}
-.upload-btn:hover:not(:disabled){border-color:rgba(47,230,164,.5)!important;background:rgba(47,230,164,.12)!important}
-.upload-btn:disabled{opacity:.4;cursor:not-allowed}
-.prov-tab{transition:all .15s;cursor:pointer}
-.prov-tab:hover{border-color:rgba(34,211,238,.4)!important;background:rgba(34,211,238,.06)!important}
-.prov-tab.active{border-color:#22d3ee!important;background:rgba(34,211,238,.12)!important;color:#22d3ee!important}
-.file-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:6px;padding:3px 8px;font-size:10px;color:#22d3ee;font-family:'JetBrains Mono',monospace;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-textarea:focus{outline:none}
-input:focus{outline:none;border-color:rgba(34,211,238,.5)!important}
-select:focus{outline:none}
-.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.status-ok{background:#2fe6a4}
-.status-warn{background:#f59e0b}
-.status-err{background:#ef4444}
-.status-idle{background:#1c2740;border:1px solid #2a3a5c}
+@keyframes scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Global interaction styles */
+button{cursor:pointer;font-family:var(--font);border:none;outline:none;background:none}
+button:active{transform:scale(.97)}
+input,select,textarea{font-family:var(--font);outline:none;background:none}
+textarea:focus,input:focus,select:focus{outline:none}
+
+/* Utility */
+.font-mono{font-family:var(--mono)}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Status dots */
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot-ok{background:var(--green)}
+.dot-warn{background:var(--amber)}
+.dot-err{background:var(--red)}
+.dot-idle{background:var(--border-focus)}
+.dot-live{background:var(--green);animation:pulse-dot 2s infinite}
+
+/* Provider color classes */
+.prov-openai{--pc:#10a37f;--pb:rgba(16,163,127,.18);--pg:rgba(16,163,127,.08)}
+.prov-gemini{--pc:#4285f4;--pb:rgba(66,133,244,.18);--pg:rgba(66,133,244,.08)}
+.prov-groq{--pc:#f97316;--pb:rgba(249,115,22,.18);--pg:rgba(249,115,22,.08)}
+.prov-openrouter{--pc:#8b5cf6;--pb:rgba(139,92,246,.18);--pg:rgba(139,92,246,.08)}
+
+/* File chip */
+.file-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--surface-3);border:1px solid var(--border);
+  border-radius:6px;padding:3px 8px;
+  font-size:11px;color:var(--text-secondary);font-family:var(--mono);
+  max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* Quick btn */
+.quick-btn{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r8);padding:10px 12px;
+  color:var(--text-secondary);font-size:12.5px;line-height:1.45;
+  text-align:left;transition:all 180ms var(--ease-out);
+  width:100%;
+}
+.quick-btn:hover{
+  background:var(--surface-2);border-color:var(--border-focus);
+  color:var(--text-primary);transform:none;
+}
+.quick-btn:active{background:var(--surface-3);transform:scale(.99)}
+
+/* Input field */
+.input-field{
+  width:100%;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--r12);
+  padding:11px 14px;color:var(--text-primary);
+  font-size:13.5px;transition:border-color 180ms;
+}
+.input-field:focus{border-color:var(--border-focus)}
+.input-field::placeholder{color:var(--text-tertiary)}
+
+/* Select field */
+.select-field{
+  width:100%;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--r12);
+  padding:11px 14px;color:var(--text-primary);
+  font-size:13px;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  padding-right:32px;transition:border-color 180ms;
+}
+.select-field:focus{border-color:var(--border-focus)}
+
+/* Primary btn */
+.btn-primary{
+  width:100%;padding:13px 16px;border-radius:var(--r12);
+  background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(59,130,246,.12));
+  border:1px solid rgba(59,130,246,.35);
+  color:#93c5fd;font-size:13.5px;font-weight:600;letter-spacing:.01em;
+  transition:all 180ms var(--ease-out);
+}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(59,130,246,.28),rgba(59,130,246,.18));border-color:rgba(59,130,246,.5);color:#bfdbfe}
+.btn-primary:active{transform:scale(.99)}
+
+/* Icon btn */
+.icon-btn{
+  width:40px;height:40px;border-radius:var(--r8);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-secondary);font-size:15px;flex-shrink:0;
+  transition:all 160ms var(--ease-out);
+}
+.icon-btn:hover{background:var(--surface-3);border-color:var(--border-focus);color:var(--text-primary)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn:disabled{opacity:.35;pointer-events:none}
+
+/* Send btn */
+.send-btn{
+  width:40px;height:40px;border-radius:var(--r8);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-glow);border:1px solid var(--accent-border);
+  color:var(--accent);font-size:16px;flex-shrink:0;
+  transition:all 160ms var(--ease-out);
+}
+.send-btn:hover:not(:disabled){background:rgba(59,130,246,.22);border-color:rgba(59,130,246,.5);color:#93c5fd}
+.send-btn:active:not(:disabled){transform:scale(.92)}
+.send-btn:disabled{opacity:.3;pointer-events:none}
+
+/* Provider tab */
+.prov-tab{
+  flex:1;min-width:72px;padding:10px 8px;border-radius:var(--r12);
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-tertiary);font-size:10px;letter-spacing:.02em;
+  text-align:center;transition:all 160ms var(--ease-out);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.prov-tab:hover{background:var(--surface-3);border-color:var(--border-focus);color:var(--text-secondary)}
+.prov-tab.active{color:var(--text-primary)}
+
+/* Switcher pill */
+.switcher-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:99px;flex-shrink:0;
+  font-size:12px;font-weight:500;letter-spacing:.01em;
+  border:1px solid var(--border);background:var(--surface-2);
+  color:var(--text-tertiary);transition:all 160ms var(--ease-out);
+  white-space:nowrap;
+}
+.switcher-pill:hover{border-color:var(--border-focus);color:var(--text-secondary);background:var(--surface-3)}
+.switcher-pill.active{color:var(--text-primary)}
+
+/* Message bubble */
+.msg-user{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:16px 16px 4px 16px;
+}
+.msg-ai{
+  background:var(--surface);
+  border:1px solid var(--border-subtle);
+  border-radius:16px 16px 16px 4px;
+}
+
+/* Drag overlay */
+.drag-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(8,9,13,.88);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px dashed var(--border-focus);
+  border-radius:var(--r16);
+  animation:fadeIn .12s ease;
+}
+
+/* Onboarding card */
+.onboard-card{
+  max-width:400px;width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r24);
+  padding:28px 24px;
+  box-shadow:var(--shadow-xl);
+  animation:scaleIn .2s var(--ease-out);
+}
+
+/* Modal overlay */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(8,9,13,.85);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  animation:fadeIn .15s ease;
+}
+.modal-card{
+  max-width:440px;width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r24);
+  padding:0;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-xl);
+  animation:slideUp .2s var(--ease-out);
+}
+
+/* Section label */
+.label{
+  font-size:10.5px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-tertiary);
+  font-family:var(--mono);
+}
+
+/* Glow ring for active badge */
+.badge-glow{
+  position:relative;
+  border-radius:99px;overflow:visible;
+}
+.badge-glow::before{
+  content:'';position:absolute;inset:-1px;
+  border-radius:99px;
+  background:var(--accent);
+  opacity:.06;
+  pointer-events:none;
+}
+
+/* Info box */
+.info-box{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r12);padding:12px 14px;
+  font-size:12.5px;line-height:1.7;color:var(--text-secondary);
+}
+
+/* Separator */
+.sep{height:1px;background:var(--border);margin:0}
+
+/* Fade up animation for messages */
+.msg-anim{animation:fadeUp .22s var(--ease-out)}
+
+/* Typing dots */
+.typing-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--text-tertiary);
+  animation:bounce-dot 1.3s ease-in-out infinite;
+}
+
+/* Tag badge */
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:600;letter-spacing:.04em;
+  font-family:var(--mono);border-radius:5px;
+  padding:2px 7px;
+}
+.tag-ok{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.tag-warn{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.tag-set{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+
+/* Pair input */
+.pair-input{
+  width:64px;padding:7px 10px;border-radius:var(--r8);
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-primary);font-family:var(--mono);font-size:11px;
+  text-align:center;letter-spacing:.06em;text-transform:uppercase;
+  transition:border-color 180ms;
+}
+.pair-input:focus{border-color:var(--border-focus)}
+.pair-input::placeholder{color:var(--text-muted)}
+
+/* Textarea */
+.chat-textarea{
+  flex:1;background:transparent;border:none;
+  color:var(--text-primary);font-size:14px;line-height:1.6;
+  resize:none;max-height:120px;overflow-y:auto;
+  caret-color:var(--accent);
+  padding:0;
+}
+.chat-textarea::placeholder{color:var(--text-tertiary)}
+
+/* Provider colors by pid */
+.pc-chatgpt{color:#10a37f}
+.pc-gemini{color:#4285f4}
+.pc-groq{color:#f97316}
+.pc-openrouter{color:#8b5cf6}
+
 </style>
 </head>
 <body>
@@ -66,13 +356,14 @@ LARANGAN: Melawan H4 | Entry tanpa S&D | Tarik Fib dari swing basi | FOMO | Entr
 CARA JAWAB: Langsung to the point | Skip->tegas+alasan singkat | Valid->ENTRY+SL+TP | Pakai bullets.`;
 
 // ─── PROVIDERS CONFIG ─────────────────────────────────────────────────────────
-// provider id => { name, color, icon, baseUrl, keyPrefix, keyPlaceholder, keyUrl, models[] }
 const PROVIDERS = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
+    shortName: "Gemini",
     icon: "🟦",
     color: "#4285f4",
+    colorRgb: "66,133,244",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     keyPrefix: "AIza",
     keyPlaceholder: "AIzaSy...",
@@ -87,8 +378,10 @@ const PROVIDERS = {
   groq: {
     id: "groq",
     name: "Groq",
+    shortName: "Groq",
     icon: "⚡",
     color: "#f97316",
+    colorRgb: "249,115,22",
     baseUrl: "https://api.groq.com/openai/v1/chat/completions",
     keyPrefix: "gsk_",
     keyPlaceholder: "gsk_...",
@@ -103,8 +396,10 @@ const PROVIDERS = {
   openrouter: {
     id: "openrouter",
     name: "OpenRouter",
+    shortName: "OpenRouter",
     icon: "🔀",
     color: "#8b5cf6",
+    colorRgb: "139,92,246",
     baseUrl: "https://openrouter.ai/api/v1/chat/completions",
     keyPrefix: "sk-or-",
     keyPlaceholder: "sk-or-...",
@@ -120,19 +415,21 @@ const PROVIDERS = {
   },
   chatgpt: {
     id: "chatgpt",
-    name: "ChatGPT",
-    icon: "🟢",
+    name: "OpenAI",
+    shortName: "OpenAI",
+    icon: "◆",
     color: "#10a37f",
+    colorRgb: "16,163,127",
     baseUrl: "https://api.openai.com/v1/chat/completions",
     keyPrefix: "sk-",
     keyPlaceholder: "sk-...",
     keyUrl: "platform.openai.com/api-keys",
     keyNote: "Create new secret key",
     models: [
-      {id:"gpt-4o",          label:"GPT-4o (Vision)",       vision:true},
-      {id:"gpt-4o-mini",     label:"GPT-4o Mini (Vision)",  vision:true},
-      {id:"gpt-4-turbo",     label:"GPT-4 Turbo (Vision)",  vision:true},
-      {id:"gpt-3.5-turbo",   label:"GPT-3.5 Turbo",         vision:false},
+      {id:"gpt-4o",          label:"GPT-4o",       vision:true},
+      {id:"gpt-4o-mini",     label:"GPT-4o Mini",  vision:true},
+      {id:"gpt-4-turbo",     label:"GPT-4 Turbo",  vision:true},
+      {id:"gpt-3.5-turbo",   label:"GPT-3.5 Turbo",vision:false},
     ],
   },
 };
@@ -151,18 +448,18 @@ const QUICK_PROMPTS = [
 
 const IMAGE_TYPES = ["image/jpeg","image/png","image/gif","image/webp","image/bmp"];
 const MAX_SIZE = 20 * 1024 * 1024;
-const STORAGE_KEY = "gip_v6_providers"; // { gemini:{key,model}, groq:{key,model}, openrouter:{key,model}, chatgpt:{key,model}, activeProvider }
+const STORAGE_KEY = "gip_v6_providers";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function getIcon(type) {
   if (!type) return "📄";
-  if (IMAGE_TYPES.includes(type)) return "🖼️";
-  if (type.includes("pdf")) return "📕";
+  if (IMAGE_TYPES.includes(type)) return "🖼";
+  if (type.includes("pdf")) return "📄";
   if (type.includes("csv")||type.includes("sheet")||type.includes("excel")) return "📊";
   if (type.includes("word")||type.includes("document")) return "📝";
   if (type.includes("text")||type.includes("txt")) return "📄";
-  if (type.includes("json")) return "🗂️";
-  if (type.includes("zip")||type.includes("rar")) return "🗜️";
+  if (type.includes("json")) return "{ }";
+  if (type.includes("zip")||type.includes("rar")) return "📦";
   return "📎";
 }
 async function toBase64(file) {
@@ -177,18 +474,23 @@ function loadStorage() {
 function saveStorage(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
+function provColorStyle(pid){
+  const p = PROVIDERS[pid];
+  return { color: p.color };
+}
 
-// ─── SUB COMPONENTS ───────────────────────────────────────────────────────────
+// ─── TYPING INDICATOR ─────────────────────────────────────────────────────────
 function TypingIndicator() {
   return (
-    <div style={{display:"flex",alignItems:"center",gap:6,padding:"12px 16px"}}>
+    <div style={{display:"flex",alignItems:"center",gap:5,padding:"14px 16px"}}>
       {[0,1,2].map(i=>(
-        <div key={i} style={{width:7,height:7,borderRadius:"50%",background:"#22d3ee",animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite`,opacity:.7}}/>
+        <div key={i} className="typing-dot" style={{animationDelay:`${i*0.18}s`}}/>
       ))}
     </div>
   );
 }
 
+// ─── FILE PREVIEW ─────────────────────────────────────────────────────────────
 function FilePreview({f, onRemove}) {
   const isImg = IMAGE_TYPES.includes(f.type);
   const [url, setUrl] = useState(null);
@@ -196,73 +498,102 @@ function FilePreview({f, onRemove}) {
     if(isImg){ const u=URL.createObjectURL(f); setUrl(u); return ()=>URL.revokeObjectURL(u); }
   },[f]);
   return (
-    <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
+    <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative"}}>
       {isImg && url ? (
         <div style={{position:"relative"}}>
-          <img src={url} alt={f.name} style={{width:56,height:56,objectFit:"cover",borderRadius:8,border:"1px solid rgba(34,211,238,.3)"}}/>
-          <button onClick={onRemove} style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:"#1c2740",border:"1px solid #22d3ee",color:"#e7ecf7",cursor:"pointer",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <img src={url} alt={f.name} style={{width:52,height:52,objectFit:"cover",borderRadius:8,border:"1px solid var(--border)"}}/>
+          <button onClick={onRemove} style={{
+            position:"absolute",top:-5,right:-5,width:18,height:18,borderRadius:"50%",
+            background:"var(--surface-3)",border:"1px solid var(--border-focus)",
+            color:"var(--text-secondary)",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",
+            lineHeight:1,cursor:"pointer",
+          }}>✕</button>
         </div>
       ) : (
-        <span className="file-chip">{getIcon(f.type)}&nbsp;<span style={{maxWidth:110,overflow:"hidden",textOverflow:"ellipsis"}}>{f.name}</span><span style={{cursor:"pointer",opacity:.6,marginLeft:2}} onClick={onRemove}>✕</span></span>
+        <div style={{display:"flex",alignItems:"center",gap:6,background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:8,padding:"6px 10px",maxWidth:160,cursor:"default"}}>
+          <span style={{fontSize:13,flex:"0 0 auto"}}>{getIcon(f.type)}</span>
+          <span style={{fontSize:11,color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"var(--mono)"}}>{f.name}</span>
+          <button onClick={onRemove} style={{color:"var(--text-tertiary)",fontSize:11,marginLeft:2,cursor:"pointer",flexShrink:0,lineHeight:1}}>✕</button>
+        </div>
       )}
-      <span style={{fontSize:9,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace"}}>{(f.size/1024).toFixed(0)}KB</span>
+      <span style={{fontSize:9,color:"var(--text-tertiary)",fontFamily:"var(--mono)"}}>{(f.size/1024).toFixed(0)}KB</span>
     </div>
   );
 }
 
+// ─── MESSAGE ─────────────────────────────────────────────────────────────────
 function Message({msg}) {
   const isUser = msg.role === "user";
   const imgs = (msg.attachments||[]).filter(a=>a.type==="image");
   const docs = (msg.attachments||[]).filter(a=>a.type!=="image");
-  const providerColor = msg.providerColor || "#22d3ee";
+  const providerColor = msg.providerColor || "var(--accent)";
+
   return (
-    <div style={{display:"flex",justifyContent:isUser?"flex-end":"flex-start",marginBottom:12,animation:"fadeIn 0.25s ease"}}>
+    <div className="msg-anim" style={{display:"flex",justifyContent:isUser?"flex-end":"flex-start",marginBottom:16,gap:10}}>
       {!isUser && (
-        <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#0d1424,#1c2740)",border:`1.5px solid ${providerColor}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,marginRight:10,marginTop:2}}>
-          {msg.providerIcon||"📊"}
+        <div style={{
+          width:32,height:32,borderRadius:"50%",flexShrink:0,marginTop:2,
+          background:"var(--surface-2)",border:`1px solid ${providerColor}22`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:13,color:providerColor,fontWeight:700,
+          fontFamily:"var(--mono)",letterSpacing:"-.02em",
+        }}>
+          {msg.providerIcon||"◆"}
         </div>
       )}
-      <div style={{maxWidth:"82%",background:isUser?"linear-gradient(135deg,rgba(34,211,238,.18),rgba(34,211,238,.08))":"linear-gradient(180deg,rgba(15,22,40,.9),rgba(8,12,24,.95))",border:isUser?"1px solid rgba(34,211,238,.3)":"1px solid #1c2740",borderRadius:isUser?"16px 16px 4px 16px":"16px 16px 16px 4px",padding:"11px 14px",fontSize:13,lineHeight:1.65,color:"#e7ecf7",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
-        {imgs.length > 0 && (
-          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:msg.content?8:0}}>
-            {imgs.map((a,i)=>(
-              <img key={i} src={"data:"+a.mediaType+";base64,"+a.data} alt={a.name} style={{maxWidth:200,maxHeight:150,borderRadius:8,objectFit:"cover",border:"1px solid rgba(34,211,238,.2)"}}/>
-            ))}
-          </div>
-        )}
-        {docs.length > 0 && (
-          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:msg.content?8:0}}>
-            {docs.map((a,i)=>(
-              <span key={i} className="file-chip">{getIcon(a.mediaType)}&nbsp;{a.name}</span>
-            ))}
-          </div>
-        )}
-        {msg.content}
-        {msg.usedProvider && (
-          <div style={{marginTop:6,fontSize:9,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace",textAlign:"right"}}>
-            via {msg.usedProvider}
+      <div style={{maxWidth:"78%",display:"flex",flexDirection:"column",gap:4,alignItems:isUser?"flex-end":"flex-start"}}>
+        <div className={isUser?"msg-user":"msg-ai"} style={{
+          padding:"11px 15px",
+          fontSize:13.5,lineHeight:1.65,
+          color:"var(--text-primary)",
+          whiteSpace:"pre-wrap",wordBreak:"break-word",
+        }}>
+          {imgs.length > 0 && (
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:msgs_content_margin(msg)}}>
+              {imgs.map((a,i)=>(
+                <img key={i} src={"data:"+a.mediaType+";base64,"+a.data} alt={a.name}
+                  style={{maxWidth:180,maxHeight:130,borderRadius:8,objectFit:"cover",border:"1px solid var(--border)"}}/>
+              ))}
+            </div>
+          )}
+          {docs.length > 0 && (
+            <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:msg.content?8:0}}>
+              {docs.map((a,i)=>(
+                <span key={i} className="file-chip">{getIcon(a.mediaType)} {a.name}</span>
+              ))}
+            </div>
+          )}
+          {msg.content}
+        </div>
+        {msg.usedProvider && !isUser && (
+          <div style={{
+            fontSize:10,color:"var(--text-tertiary)",fontFamily:"var(--mono)",
+            display:"flex",alignItems:"center",gap:4,paddingLeft:2,
+          }}>
+            <span style={{color:providerColor,fontSize:8}}>◆</span>
+            <span>{msg.usedProvider}</span>
           </div>
         )}
       </div>
     </div>
   );
 }
+function msgs_content_margin(msg){ return msg.content ? 8 : 0; }
 
-// ─── PROVIDER STATUS BADGE ────────────────────────────────────────────────────
+// ─── PROVIDER STATUS BADGE (legacy, unused in new UI) ─────────────────────────
 function ProviderBadge({provId, prov, cfg, status, onClick}) {
-  const statusClass = status === "ok" ? "status-ok" : status === "warn" ? "status-warn" : status === "err" ? "status-err" : "status-idle";
   const hasKey = !!(cfg && cfg.key);
   return (
-    <button
-      onClick={onClick}
-      className={`prov-tab${provId === prov ? " active" : ""}`}
-      style={{display:"flex",alignItems:"center",gap:5,background:"rgba(13,20,36,.8)",border:`1px solid ${provId===prov?"#22d3ee":"#1c2740"}`,borderRadius:8,padding:"4px 8px",cursor:"pointer",color:hasKey?"#e7ecf7":"#4a5568",fontSize:10,fontFamily:"'JetBrains Mono',monospace",whiteSpace:"nowrap"}}
-      title={PROVIDERS[provId].name + (hasKey ? ` — ${cfg.model||""}` : " — belum setup")}
+    <button onClick={onClick}
+      style={{display:"flex",alignItems:"center",gap:5,background:"var(--surface-2)",
+        border:`1px solid ${provId===prov?"var(--border-focus)":"var(--border)"}`,
+        borderRadius:8,padding:"4px 8px",cursor:"pointer",color:hasKey?"var(--text-secondary)":"var(--text-tertiary)",
+        fontSize:10,fontFamily:"var(--mono)",whiteSpace:"nowrap"}}
     >
-      <div className={`status-dot ${statusClass}`}/>
-      <span style={{fontSize:12}}>{PROVIDERS[provId].icon}</span>
+      <span className={`dot dot-${status==="ok"?"ok":status==="warn"?"warn":status==="err"?"err":"idle"}`}/>
+      <span>{PROVIDERS[provId].icon}</span>
       <span>{PROVIDERS[provId].name}</span>
-      {!hasKey && <span style={{fontSize:9,color:"#4a5568"}}>+key</span>}
+      {!hasKey && <span style={{fontSize:9,color:"var(--text-muted)"}}>+ key</span>}
     </button>
   );
 }
@@ -277,75 +608,131 @@ function SettingsModal({configs, onSave, onClose}) {
     }
     return d;
   });
+  const [showKey, setShowKey] = useState(false);
 
   const cur = PROVIDERS[tab];
   const keyValid = draft[tab].key.length > 8;
+  const configuredCount = PROVIDER_ORDER.filter(pid=>draft[pid].key.length>8).length;
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(7,11,20,.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={onClose}>
-      <div style={{maxWidth:440,width:"100%",background:"linear-gradient(180deg,rgba(15,22,40,.98),rgba(8,12,24,.99))",border:"1px solid #1c2740",borderRadius:20,padding:24,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-        {/* Header */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:16}}>⚙ Multi-AI <span style={{color:"#22d3ee"}}>Setup</span></div>
-          <button onClick={onClose} style={{background:"transparent",border:"none",color:"#8893ad",cursor:"pointer",fontSize:18,padding:4}}>✕</button>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={e=>e.stopPropagation()}>
+        {/* Modal Header */}
+        <div style={{
+          padding:"20px 24px 18px",
+          borderBottom:"1px solid var(--border)",
+          display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,
+        }}>
+          <div>
+            <div style={{fontSize:16,fontWeight:700,color:"var(--text-primary)",letterSpacing:"-.01em",marginBottom:4}}>
+              API Configuration
+            </div>
+            <div style={{fontSize:12,color:"var(--text-tertiary)"}}>
+              {configuredCount === 0 ? "Belum ada provider terkonfigurasi" :
+               `${configuredCount} provider aktif · auto-fallback enabled`}
+            </div>
+          </div>
+          <button onClick={onClose} className="icon-btn" style={{width:32,height:32,borderRadius:"50%",flexShrink:0}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
-        {/* Provider tabs */}
-        <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap"}}>
-          {PROVIDER_ORDER.map(pid=>(
-            <button key={pid} onClick={()=>setTab(pid)}
-              style={{flex:1,padding:"8px 6px",borderRadius:10,background:tab===pid?`rgba(${pid==="gemini"?"66,133,244":pid==="groq"?"249,115,22":pid==="openrouter"?"139,92,246":"16,163,127"},.15)`:"rgba(13,20,36,.8)",border:tab===pid?`1px solid ${PROVIDERS[pid].color}`:"1px solid #1c2740",color:tab===pid?"#e7ecf7":"#8893ad",cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",fontSize:10,transition:"all .15s",minWidth:70}}
+        {/* Provider Tabs */}
+        <div style={{padding:"16px 24px 0",display:"flex",gap:6,flexWrap:"wrap"}}>
+          {PROVIDER_ORDER.map(pid=>{
+            const p = PROVIDERS[pid];
+            const isTab = tab===pid;
+            const hasKey = draft[pid].key.length > 8;
+            return (
+              <button key={pid}
+                onClick={()=>setTab(pid)}
+                className="prov-tab"
+                style={{
+                  borderColor: isTab ? p.color+"60" : "var(--border)",
+                  background: isTab ? `rgba(${p.colorRgb},.1)` : "var(--surface-2)",
+                  color: isTab ? p.color : "var(--text-tertiary)",
+                }}
+              >
+                <span style={{fontSize:15,lineHeight:1}}>{p.icon}</span>
+                <span style={{fontSize:10,fontWeight:isTab?600:400}}>{p.shortName}</span>
+                {hasKey
+                  ? <span className="tag tag-ok" style={{marginTop:1}}>✓</span>
+                  : <span style={{fontSize:9,color:"var(--text-muted)"}}>+ key</span>
+                }
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content */}
+        <div style={{padding:"16px 24px 24px",display:"flex",flexDirection:"column",gap:16}}>
+          {/* How to get key */}
+          <div className="info-box">
+            <div style={{fontSize:10.5,fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",color:"var(--text-tertiary)",fontFamily:"var(--mono)",marginBottom:8}}>
+              Cara Dapat API Key — {cur.name}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:4,fontSize:12.5,color:"var(--text-secondary)"}}>
+              <div>1. Buka <span style={{color:cur.color,fontFamily:"var(--mono)",fontSize:11.5}}>{cur.keyUrl}</span></div>
+              <div>2. Login / Sign up</div>
+              <div>3. {cur.keyNote}</div>
+              <div>4. Copy → paste di bawah</div>
+            </div>
+          </div>
+
+          {/* API Key input */}
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <label className="label">{cur.shortName} API Key</label>
+            <div style={{position:"relative"}}>
+              <input
+                type={showKey?"text":"password"}
+                value={draft[tab].key}
+                onChange={e=>setDraft(d=>({...d,[tab]:{...d[tab],key:e.target.value}}))}
+                placeholder={cur.keyPlaceholder}
+                className="input-field"
+                style={{
+                  fontFamily:"var(--mono)",fontSize:12.5,paddingRight:44,
+                  borderColor: keyValid ? `${cur.color}50` : "var(--border)",
+                }}
+              />
+              <button
+                onClick={()=>setShowKey(v=>!v)}
+                style={{
+                  position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
+                  color:"var(--text-tertiary)",fontSize:11,padding:4,borderRadius:4,
+                  fontFamily:"var(--mono)",background:"none",border:"none",cursor:"pointer",
+                }}
+              >{showKey?"hide":"show"}</button>
+            </div>
+            {keyValid && (
+              <div style={{fontSize:11,color:cur.color,display:"flex",alignItems:"center",gap:5}}>
+                <span className="dot dot-ok"/>
+                Key terdeteksi — siap digunakan
+              </div>
+            )}
+          </div>
+
+          {/* Model select */}
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <label className="label">Model</label>
+            <select
+              value={draft[tab].model}
+              onChange={e=>setDraft(d=>({...d,[tab]:{...d[tab],model:e.target.value}}))}
+              className="select-field"
             >
-              <div style={{fontSize:16,marginBottom:2}}>{PROVIDERS[pid].icon}</div>
-              <div>{PROVIDERS[pid].name}</div>
-              {draft[pid].key.length > 8 && <div style={{fontSize:8,color:"#2fe6a4",marginTop:2}}>✓ SET</div>}
-            </button>
-          ))}
-        </div>
+              {PROVIDERS[tab].models.map(m=>(
+                <option key={m.id} value={m.id}>{m.label}{m.vision?" · Vision":""}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Instructions */}
-        <div style={{background:"rgba(34,211,238,.04)",border:"1px solid rgba(34,211,238,.15)",borderRadius:10,padding:"10px 13px",marginBottom:14,fontSize:11.5,lineHeight:1.7,color:"#8893ad"}}>
-          <div style={{color:"#22d3ee",fontFamily:"'JetBrains Mono',monospace",fontSize:9.5,letterSpacing:".06em",marginBottom:6}}>CARA DAPAT API KEY — {cur.name.toUpperCase()}</div>
-          <div>1. Buka <span style={{color:"#22d3ee",fontFamily:"'JetBrains Mono',monospace"}}>{cur.keyUrl}</span></div>
-          <div>2. Login / Sign up (gratis)</div>
-          <div>3. {cur.keyNote}</div>
-          <div>4. Copy key → paste di bawah</div>
-        </div>
+          {/* Save btn */}
+          <button onClick={()=>onSave(draft)} className="btn-primary" style={{marginTop:4}}>
+            Simpan & Tutup
+          </button>
 
-        {/* Key input */}
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:10,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace",letterSpacing:".08em",marginBottom:6}}>{cur.name.toUpperCase()} API KEY</div>
-          <input
-            type="password"
-            value={draft[tab].key}
-            onChange={e=>setDraft(d=>({...d,[tab]:{...d[tab],key:e.target.value}}))}
-            placeholder={cur.keyPlaceholder}
-            style={{width:"100%",background:"#0a0f1e",border:`1px solid ${keyValid?"rgba(47,230,164,.4)":"#1c2740"}`,borderRadius:10,padding:"10px 12px",color:"#e7ecf7",fontFamily:"'JetBrains Mono',monospace",fontSize:12,transition:"border-color .15s"}}
-          />
-        </div>
-
-        {/* Model select */}
-        <div style={{marginBottom:18}}>
-          <div style={{fontSize:10,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace",letterSpacing:".08em",marginBottom:6}}>MODEL</div>
-          <select
-            value={draft[tab].model}
-            onChange={e=>setDraft(d=>({...d,[tab]:{...d[tab],model:e.target.value}}))}
-            style={{width:"100%",background:"#0a0f1e",border:"1px solid #1c2740",borderRadius:10,padding:"10px 12px",color:"#e7ecf7",fontFamily:"'JetBrains Mono',monospace",fontSize:11,outline:"none"}}
-          >
-            {PROVIDERS[tab].models.map(m=>(
-              <option key={m.id} value={m.id}>{m.label}{m.vision?" 👁️":""}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Save */}
-        <button
-          onClick={()=>onSave(draft)}
-          style={{width:"100%",padding:"12px",borderRadius:10,background:"rgba(47,230,164,.15)",border:"1px solid rgba(47,230,164,.4)",color:"#2fe6a4",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all .15s"}}
-        >SIMPAN & TUTUP</button>
-
-        <div style={{marginTop:12,fontSize:10,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace",textAlign:"center"}}>
-          Tambah beberapa key → auto-fallback otomatis saat rate limit
+          <div style={{textAlign:"center",fontSize:11,color:"var(--text-muted)",fontFamily:"var(--mono)"}}>
+            {configuredCount} dari {PROVIDER_ORDER.length} provider dikonfigurasi
+          </div>
         </div>
       </div>
     </div>
@@ -354,7 +741,6 @@ function SettingsModal({configs, onSave, onClose}) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 function App() {
-  // configs: { gemini:{key,model}, groq:{key,model}, openrouter:{key,model} }
   const [configs, setConfigs] = useState(()=>{
     const s = loadStorage();
     const c = {};
@@ -367,12 +753,12 @@ function App() {
     const s = loadStorage();
     return s.activeProvider || "chatgpt";
   });
-  const [providerStatus, setProviderStatus] = useState({}); // pid -> "ok"|"warn"|"err"|"idle"
+  const [providerStatus, setProviderStatus] = useState({});
   const [showSettings, setShowSettings] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingInfo, setLoadingInfo] = useState(""); // e.g. "Mencoba Gemini..."
+  const [loadingInfo, setLoadingInfo] = useState("");
   const [pair, setPair] = useState("");
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
@@ -383,10 +769,8 @@ function App() {
 
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[messages,loading]);
 
-  // Check if at least one provider is configured
   const hasAnyKey = PROVIDER_ORDER.some(pid => configs[pid]?.key?.length > 8);
 
-  // Get ordered list of providers to try (active first, then others with keys)
   const getFallbackOrder = useCallback(() => {
     const order = [activeProvider, ...PROVIDER_ORDER.filter(p=>p!==activeProvider)];
     return order.filter(pid => configs[pid]?.key?.length > 8);
@@ -429,7 +813,6 @@ function App() {
   };
 
   const handleSettingsSave = (draft) => {
-    // find first provider with key as active if current has no key
     let newActive = activeProvider;
     if (!draft[newActive]?.key || draft[newActive].key.length < 8) {
       newActive = PROVIDER_ORDER.find(pid => draft[pid]?.key?.length > 8) || activeProvider;
@@ -438,7 +821,6 @@ function App() {
     setShowSettings(false);
   };
 
-  // ── Content builders ────────────────────────────────────────────────────────
   const buildUserContent = async (text, fileList, isVision) => {
     const attachments = [];
     if (!fileList || fileList.length === 0) return { apiContent: text || " ", attachments };
@@ -501,24 +883,20 @@ function App() {
     }
   });
 
-  // ── Single provider call ─────────────────────────────────────────────────
   const callProvider = async (pid, apiContent, prevApiMsgs) => {
     const cfg = configs[pid];
     const prov = PROVIDERS[pid];
     const modelObj = prov.models.find(m=>m.id===cfg.model)||prov.models[0];
     const isVision = modelObj.vision;
 
-    // Rebuild content for this provider's vision capability
     let safeContent = apiContent;
     if (!isVision && Array.isArray(apiContent)) {
-      // Flatten to string for non-vision models
       safeContent = contentToString(apiContent);
     }
     if (!safeContent || (typeof safeContent==="string"&&!safeContent.trim()) || (Array.isArray(safeContent)&&!safeContent.length)) {
       safeContent = " ";
     }
 
-    // Rebuild history for this provider's vision capability
     const histMsgs = historyToApi(messages, isVision);
 
     const body = {
@@ -531,7 +909,6 @@ function App() {
       ]
     };
 
-    // OpenRouter extra headers
     const headers = {
       "Content-Type":"application/json",
       "Authorization":`Bearer ${cfg.key}`
@@ -546,7 +923,6 @@ function App() {
 
     if (!res.ok) {
       const errMsg = data.error?.message || `HTTP ${res.status}`;
-      // Rate limit or quota errors → fallback
       const isRateLimit = res.status===429 || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("rate") || errMsg.toLowerCase().includes("limit") || errMsg.toLowerCase().includes("token");
       if (isRateLimit) throw Object.assign(new Error(errMsg), {isRateLimit:true});
       if (res.status===401) throw Object.assign(new Error("API Key tidak valid untuk "+prov.name), {isAuth:true});
@@ -557,7 +933,6 @@ function App() {
     return { reply, usedProvider: prov.name, providerIcon: prov.icon, providerColor: prov.color, usedModel: cfg.model||modelObj.id };
   };
 
-  // ── Send with auto-fallback ──────────────────────────────────────────────
   const sendMessage = async (text) => {
     const userText = (text || input).trim();
     if ((!userText && files.length===0) || loading) return;
@@ -582,11 +957,10 @@ function App() {
       for (let i=0; i<tryOrder.length; i++) {
         const pid = tryOrder[i];
         const prov = PROVIDERS[pid];
-        setLoadingInfo(i===0 ? `🤖 ${prov.name}...` : `⚡ Rate limit! Beralih ke ${prov.name}...`);
+        setLoadingInfo(i===0 ? `${prov.name}...` : `Rate limit — beralih ke ${prov.name}...`);
         try {
           const result = await callProvider(pid, apiContent, []);
           setProviderStatus(s=>({...s,[pid]:"ok"}));
-          // If we fell back, update active provider
           if (pid !== activeProvider) {
             setActiveProvider(pid);
             saveStorage({...configs, activeProvider:pid});
@@ -598,22 +972,21 @@ function App() {
           lastErr = e;
           if (e.isRateLimit) {
             setProviderStatus(s=>({...s,[pid]:"warn"}));
-            continue; // try next provider
+            continue;
           }
           if (e.isAuth) {
             setProviderStatus(s=>({...s,[pid]:"err"}));
             continue;
           }
-          // Other error: still try next
           setProviderStatus(s=>({...s,[pid]:"err"}));
           continue;
         }
       }
       if (lastErr) {
-        setMessages(prev=>[...prev,{role:"assistant",content:`⚠️ Semua provider gagal.\n\nError terakhir: ${lastErr.message}\n\nTambah API key provider lain via ⚙ atau coba lagi nanti.`}]);
+        setMessages(prev=>[...prev,{role:"assistant",content:`Semua provider gagal.\n\nError: ${lastErr.message}\n\nCek API key via tombol Settings atau coba lagi nanti.`}]);
       }
     } catch(e) {
-      setMessages(prev=>[...prev,{role:"assistant",content:`⚠️ Error: ${e.message}`}]);
+      setMessages(prev=>[...prev,{role:"assistant",content:`Error: ${e.message}`}]);
     } finally {
       setLoading(false);
       setLoadingInfo("");
@@ -626,230 +999,424 @@ function App() {
   const isEmpty = messages.length===0;
   const canSend = (input.trim()||files.length>0)&&!loading;
   const curProv = PROVIDERS[activeProvider];
+  const configuredProviders = PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8);
 
+  // ── ONBOARDING SCREEN ──────────────────────────────────────────────────────
   if (!hasAnyKey) {
     return (
-      <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#070b14",backgroundImage:"linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)",backgroundSize:"28px 28px",padding:20,overflowY:"auto"}}>
-        <div style={{maxWidth:420,width:"100%",background:"linear-gradient(180deg,rgba(15,22,40,.95),rgba(8,12,24,.98))",border:"1px solid #1c2740",borderRadius:20,padding:26}}>
-          <div style={{textAlign:"center",marginBottom:22}}>
-            <div style={{fontSize:30,marginBottom:10}}>📊</div>
-            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:19,marginBottom:5}}>GIP <span style={{color:"#22d3ee"}}>MASTER</span> AI</div>
-            <div style={{fontSize:11,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace",letterSpacing:".06em"}}>MULTI-PROVIDER · AUTO FALLBACK · FREE</div>
-          </div>
-
-          <div style={{background:"rgba(47,230,164,.06)",border:"1px solid rgba(47,230,164,.2)",borderRadius:12,padding:"12px 14px",marginBottom:18,fontSize:12,lineHeight:1.8,color:"#e7ecf7"}}>
-            <div style={{color:"#2fe6a4",fontFamily:"'JetBrains Mono',monospace",fontSize:10,marginBottom:8}}>🔀 SISTEM AUTO-FALLBACK:</div>
-            <div>Daftarkan beberapa API key dari provider berbeda.</div>
-            <div>Jika satu provider kena rate limit → <span style={{color:"#22d3ee"}}>otomatis ganti</span> ke provider berikutnya.</div>
-            <div style={{marginTop:8,color:"#8893ad",fontSize:11}}>
-              <span style={{color:"#10a37f"}}>🟢 ChatGPT</span> → <span style={{color:"#4285f4"}}>🟦 Gemini</span> → <span style={{color:"#f97316"}}>⚡ Groq</span> → <span style={{color:"#8b5cf6"}}>🔀 OpenRouter</span>
+      <div style={{
+        height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
+        background:"var(--bg)",padding:20,overflowY:"auto",
+      }}>
+        <div className="onboard-card">
+          {/* Logo */}
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <div style={{
+              width:48,height:48,borderRadius:14,
+              background:"linear-gradient(135deg,var(--surface-2),var(--surface-3))",
+              border:"1px solid var(--border)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              margin:"0 auto 14px",fontSize:22,
+            }}>◆</div>
+            <div style={{fontSize:20,fontWeight:700,letterSpacing:"-.02em",color:"var(--text-primary)",marginBottom:4}}>
+              GIP Master AI
+            </div>
+            <div style={{fontSize:12,color:"var(--text-tertiary)",fontFamily:"var(--mono)",letterSpacing:".04em"}}>
+              MULTI-PROVIDER · AUTO-FALLBACK
             </div>
           </div>
 
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
-            {PROVIDER_ORDER.map(pid=>{
+          {/* Auto-fallback info */}
+          <div style={{
+            background:"var(--surface-2)",border:"1px solid var(--border)",
+            borderRadius:var_r12(),padding:"12px 14px",marginBottom:20,
+          }}>
+            <div style={{fontSize:11,fontWeight:600,color:"var(--text-secondary)",letterSpacing:".04em",textTransform:"uppercase",fontFamily:"var(--mono)",marginBottom:8}}>
+              Auto-Fallback System
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+              {PROVIDER_ORDER.map((pid,i)=>{
+                const p = PROVIDERS[pid];
+                return (
+                  <React.Fragment key={pid}>
+                    <div style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:p.color,fontWeight:500}}>
+                      <span>{p.icon}</span><span>{p.shortName}</span>
+                    </div>
+                    {i<PROVIDER_ORDER.length-1 && <span style={{color:"var(--text-muted)",fontSize:12}}>→</span>}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            <div style={{marginTop:8,fontSize:11.5,color:"var(--text-tertiary)",lineHeight:1.5}}>
+              Rate limit terpicu → otomatis ganti provider
+            </div>
+          </div>
+
+          {/* Provider list */}
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+            {PROVIDER_ORDER.map((pid,i)=>{
               const p = PROVIDERS[pid];
               return (
-                <div key={pid} style={{background:"rgba(13,20,36,.8)",border:"1px solid #1c2740",borderRadius:10,padding:"10px 13px",fontSize:11.5,lineHeight:1.6,color:"#8893ad"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
-                    <span style={{fontSize:16}}>{p.icon}</span>
-                    <span style={{color:"#e7ecf7",fontWeight:600}}>{p.name}</span>
-                    <span style={{fontSize:9,color:"#2fe6a4",fontFamily:"'JetBrains Mono',monospace",background:"rgba(47,230,164,.08)",border:"1px solid rgba(47,230,164,.2)",borderRadius:4,padding:"1px 5px"}}>GRATIS</span>
+                <div key={pid} style={{
+                  display:"flex",alignItems:"center",justifyContent:"space-between",
+                  background:"var(--surface-2)",border:"1px solid var(--border)",
+                  borderRadius:var_r12(),padding:"10px 14px",
+                }}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{
+                      width:32,height:32,borderRadius:8,
+                      background:`rgba(${p.colorRgb},.1)`,
+                      border:`1px solid rgba(${p.colorRgb},.2)`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:14,color:p.color,fontFamily:"var(--mono)",fontWeight:700,
+                    }}>{p.icon}</div>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:"var(--text-primary)",marginBottom:2}}>{p.name}</div>
+                      <div style={{fontSize:11,color:"var(--text-tertiary)",fontFamily:"var(--mono)"}}>{p.keyUrl}</div>
+                    </div>
                   </div>
-                  <div style={{fontSize:10.5}}>
-                    <span style={{color:"#4a5568"}}>Key: </span>
-                    <span style={{color:"#22d3ee",fontFamily:"'JetBrains Mono',monospace"}}>{p.keyUrl}</span>
-                    <span style={{color:"#4a5568"}}> → {p.keyNote}</span>
-                  </div>
+                  {i===0 && <span className="tag tag-ok">Utama</span>}
+                  {i>0 && i<3 && <span className="tag tag-warn">Backup</span>}
+                  {i===3 && <span style={{fontSize:10,color:"var(--text-muted)",fontFamily:"var(--mono)"}}>Cadangan</span>}
                 </div>
               );
             })}
           </div>
 
-          <button
-            onClick={()=>setShowSettings(true)}
-            style={{width:"100%",padding:"13px",borderRadius:10,background:"rgba(34,211,238,.15)",border:"1px solid rgba(34,211,238,.4)",color:"#22d3ee",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all .15s"}}
-          >⚙ SETUP API KEYS →</button>
-          <div style={{textAlign:"center",marginTop:12,fontSize:10,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace"}}>Cukup 1 key untuk mulai · Tambah lebih untuk auto-fallback</div>
+          <button onClick={()=>setShowSettings(true)} className="btn-primary">
+            Setup API Keys
+          </button>
+          <div style={{textAlign:"center",marginTop:12,fontSize:11,color:"var(--text-muted)",fontFamily:"var(--mono)"}}>
+            Cukup 1 key untuk mulai
+          </div>
         </div>
         {showSettings && <SettingsModal configs={configs} onSave={handleSettingsSave} onClose={()=>setShowSettings(false)}/>}
       </div>
     );
   }
 
+  // ── MAIN CHAT UI ──────────────────────────────────────────────────────────
   return (
     <div
-      style={{height:"100vh",display:"flex",flexDirection:"column",background:"#070b14",backgroundImage:"linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)",backgroundSize:"28px 28px",color:"#e7ecf7",fontFamily:"'Inter',sans-serif",position:"relative"}}
+      style={{height:"100vh",display:"flex",flexDirection:"column",background:"var(--bg)",color:"var(--text-primary)",position:"relative",overflow:"hidden"}}
       onDragOver={e=>{e.preventDefault();setDragging(true);}}
-      onDragLeave={()=>setDragging(false)}
+      onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragging(false);}}
       onDrop={e=>{e.preventDefault();setDragging(false);addFiles(Array.from(e.dataTransfer.files));}}
     >
-      {dragging&&(
-        <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(7,11,20,.92)",display:"flex",alignItems:"center",justifyContent:"center",border:"2px dashed #22d3ee",borderRadius:16,pointerEvents:"none",animation:"fadeIn .15s ease"}}>
-          <div style={{textAlign:"center"}}><div style={{fontSize:40,marginBottom:10}}>📎</div><div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:18,color:"#22d3ee"}}>Drop file di sini</div></div>
+      {/* Drag overlay */}
+      {dragging && (
+        <div className="drag-overlay">
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:36,marginBottom:12,opacity:.7}}>📎</div>
+            <div style={{fontSize:17,fontWeight:600,color:"var(--text-primary)",letterSpacing:"-.01em"}}>Drop file di sini</div>
+            <div style={{fontSize:12,color:"var(--text-tertiary)",marginTop:6}}>Gambar, PDF, atau dokumen apapun</div>
+          </div>
         </div>
       )}
 
-      {/* HEADER */}
-      <header style={{padding:"9px 14px",borderBottom:"1px solid #1c2740",background:"rgba(7,11,20,.97)",backdropFilter:"blur(20px)",flexShrink:0,zIndex:10}}>
-        <div style={{maxWidth:680,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-          {/* Logo */}
-          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-            <div style={{width:30,height:30,borderRadius:8,background:"linear-gradient(135deg,#0d1424,#1c2740)",border:`1.5px solid ${curProv.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📊</div>
-            <div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13}}>GIP <span style={{color:"#22d3ee"}}>MASTER</span> AI</div>
-              <div style={{display:"flex",alignItems:"center",gap:4,marginTop:1}}>
-                <div style={{width:4,height:4,borderRadius:"50%",background:"#2fe6a4",animation:"pulse 2s infinite"}}/>
-                <span style={{fontSize:8.5,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace"}}>{curProv.icon} {curProv.name} · {configs[activeProvider]?.model?.split("/").pop()||""}</span>
-              </div>
+      {/* ── HEADER ── */}
+      <header style={{
+        padding:"0 16px",height:56,flexShrink:0,
+        borderBottom:"1px solid var(--border-subtle)",
+        background:"rgba(8,9,13,.96)",
+        backdropFilter:"blur(20px)",
+        display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,
+        zIndex:10,
+      }}>
+        {/* Left: Logo */}
+        <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <div style={{
+            width:30,height:30,borderRadius:8,
+            background:`rgba(${curProv.colorRgb},.1)`,
+            border:`1px solid rgba(${curProv.colorRgb},.2)`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:13,color:curProv.color,fontFamily:"var(--mono)",fontWeight:700,
+            transition:"all 250ms var(--ease-out)",
+          }}>◆</div>
+          <div>
+            <div style={{fontSize:13.5,fontWeight:700,letterSpacing:"-.01em",lineHeight:1.2}}>
+              GIP <span style={{color:curProv.color,transition:"color 250ms"}}>Master</span> AI
             </div>
           </div>
+        </div>
 
-          {/* ACTIVE AI BADGE — center, always visible */}
-          <div style={{flex:1,display:"flex",justifyContent:"center"}}>
-            <div style={{
-              display:"flex",alignItems:"center",gap:6,
-              background:`rgba(${curProv.color==="#4285f4"?"66,133,244":curProv.color==="#f97316"?"249,115,22":curProv.color==="#8b5cf6"?"139,92,246":"16,163,127"},.15)`,
-              border:`1.5px solid ${curProv.color}`,
-              borderRadius:999,padding:"4px 12px",
-              fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:600,
-              color:curProv.color,whiteSpace:"nowrap",
-              boxShadow:`0 0 12px ${curProv.color}33`
+        {/* Center: Active AI badge */}
+        <div style={{flex:1,display:"flex",justifyContent:"center",alignItems:"center"}}>
+          <div style={{
+            display:"flex",alignItems:"center",gap:7,
+            padding:"5px 14px 5px 10px",borderRadius:99,
+            background:`rgba(${curProv.colorRgb},.08)`,
+            border:`1px solid rgba(${curProv.colorRgb},.2)`,
+            transition:"all 250ms var(--ease-out)",
+          }}>
+            <span className="dot dot-live" style={{background:curProv.color}}/>
+            <span style={{fontSize:13,color:curProv.color,fontWeight:600,letterSpacing:"-.01em",transition:"color 250ms"}}>{curProv.name}</span>
+            <span style={{
+              fontSize:10,color:"var(--text-tertiary)",fontFamily:"var(--mono)",
+              borderLeft:"1px solid var(--border)",paddingLeft:7,
             }}>
-              <span style={{fontSize:14}}>{curProv.icon}</span>
-              <span>{curProv.name}</span>
-              <span style={{fontSize:9,opacity:.7,color:"#e7ecf7"}}>· {configs[activeProvider]?.model?.split("/").pop()||""}</span>
-              <div style={{width:6,height:6,borderRadius:"50%",background:"#2fe6a4",animation:"pulse 2s infinite",flexShrink:0}}/>
-            </div>
+              {configs[activeProvider]?.model?.split("/").pop()||""}
+            </span>
           </div>
+        </div>
 
-          {/* Right controls */}
-          <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-            <input value={pair} onChange={e=>setPair(e.target.value.toUpperCase())} placeholder="PAIR" style={{width:60,background:"#0d1424",border:"1px solid #1c2740",borderRadius:7,padding:"4px 7px",color:"#e7ecf7",fontFamily:"'JetBrains Mono',monospace",fontSize:10,outline:"none",textAlign:"center"}}/>
-            <button onClick={()=>setShowSettings(true)} style={{background:"transparent",border:"1px solid #1c2740",borderRadius:7,padding:"4px 8px",color:"#8893ad",fontSize:10,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>⚙</button>
-          </div>
+        {/* Right: Pair + Settings */}
+        <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+          <input
+            value={pair}
+            onChange={e=>setPair(e.target.value.toUpperCase())}
+            placeholder="PAIR"
+            className="pair-input"
+          />
+          <button onClick={()=>setShowSettings(true)} className="icon-btn" style={{width:36,height:36}} title="Settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </button>
         </div>
       </header>
 
-      {/* PROVIDER SWITCHER STRIP */}
-      {PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8).length > 1 && (
-        <div style={{padding:"5px 12px",borderBottom:"1px solid #0d1424",background:"rgba(7,11,20,.98)",display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",flexShrink:0}}>
-          {PROVIDER_ORDER.filter(pid=>configs[pid]?.key?.length>8).map(pid=>{
+      {/* ── PROVIDER SWITCHER STRIP ── */}
+      {configuredProviders.length > 1 && (
+        <div style={{
+          padding:"8px 16px",borderBottom:"1px solid var(--border-subtle)",
+          background:"rgba(8,9,13,.94)",backdropFilter:"blur(16px)",
+          display:"flex",gap:6,overflowX:"auto",flexShrink:0,
+          scrollbarWidth:"none",
+        }}>
+          {configuredProviders.map(pid=>{
             const p = PROVIDERS[pid];
-            const isActive = pid === activeProvider;
+            const isActive = pid===activeProvider;
+            const st = providerStatus[pid];
             return (
               <button key={pid}
+                className={`switcher-pill${isActive?" active":""}`}
                 onClick={()=>{ setActiveProvider(pid); saveStorage({...configs,activeProvider:pid}); }}
                 style={{
-                  display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:7,flexShrink:0,
-                  background:isActive?`rgba(${p.color==="#4285f4"?"66,133,244":p.color==="#f97316"?"249,115,22":p.color==="#8b5cf6"?"139,92,246":"16,163,127"},.18)`:"rgba(13,20,36,.8)",
-                  border:`1px solid ${isActive?p.color:"#1c2740"}`,
-                  color:isActive?p.color:"#4a5568",cursor:"pointer",
-                  fontFamily:"'JetBrains Mono',monospace",fontSize:10,transition:"all .15s",whiteSpace:"nowrap"
+                  borderColor: isActive ? `rgba(${p.colorRgb},.35)` : "var(--border)",
+                  background: isActive ? `rgba(${p.colorRgb},.1)` : "var(--surface)",
+                  color: isActive ? p.color : "var(--text-tertiary)",
                 }}
               >
-                <div className={`status-dot ${providerStatus[pid]==="ok"?"status-ok":providerStatus[pid]==="warn"?"status-warn":providerStatus[pid]==="err"?"status-err":isActive?"status-ok":"status-idle"}`}/>
-                <span style={{fontSize:12}}>{p.icon}</span>
-                <span style={{fontWeight:isActive?700:400}}>{p.name}</span>
-                {isActive && <span style={{fontSize:8,background:p.color,color:"#070b14",borderRadius:3,padding:"1px 4px",fontWeight:700}}>AKTIF</span>}
+                <span className={`dot dot-${st==="ok"?"ok":st==="warn"?"warn":st==="err"?"err":isActive?"live":"idle"}`}
+                  style={isActive && !st ? {background:p.color} : {}}/>
+                <span style={{fontSize:12.5,fontFamily:"var(--mono)"}}>{p.icon}</span>
+                <span style={{fontWeight:isActive?600:400}}>{p.shortName}</span>
+                {isActive && <span className="tag tag-ok" style={{fontSize:9,padding:"1px 5px"}}>AKTIF</span>}
               </button>
             );
           })}
         </div>
       )}
 
-      {/* CHAT */}
-      <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
-        <div style={{maxWidth:660,margin:"0 auto"}}>
-          {isEmpty&&(
-            <div style={{textAlign:"center",paddingTop:20,paddingBottom:16,animation:"fadeIn .4s ease"}}>
-              <div style={{display:"inline-flex",alignItems:"center",gap:4,flexWrap:"wrap",background:"rgba(34,211,238,.08)",border:"1px solid rgba(34,211,238,.2)",borderRadius:999,padding:"5px 13px",marginBottom:18,fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:"#22d3ee",letterSpacing:".07em",justifyContent:"center"}}>
-                {["H4","S&D","S&R","FIB","PA","M5","M1","ENTRY"].map((f,i,arr)=>(
-                  <span key={f} style={{display:"flex",alignItems:"center",gap:4}}>
-                    <span style={{color:i===arr.length-1?"#2fe6a4":"#e7ecf7",fontWeight:i===arr.length-1?700:400}}>{f}</span>
-                    {i<arr.length-1&&<span style={{color:"#1c2740"}}>+</span>}
+      {/* ── CHAT AREA ── */}
+      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 0"}}>
+        <div style={{maxWidth:680,margin:"0 auto"}}>
+
+          {/* Empty state */}
+          {isEmpty && (
+            <div style={{textAlign:"center",padding:"32px 0 24px",animation:"fadeUp .3s var(--ease-out)"}}>
+              {/* Formula pill */}
+              <div style={{
+                display:"inline-flex",alignItems:"center",gap:0,flexWrap:"wrap",justifyContent:"center",
+                background:"var(--surface-2)",border:"1px solid var(--border)",
+                borderRadius:99,padding:"6px 14px",marginBottom:24,
+                fontSize:10.5,fontFamily:"var(--mono)",fontWeight:500,letterSpacing:".05em",
+              }}>
+                {["H4","S&D","S&R","FIB","PA","M5","M1"].map((f,i)=>(
+                  <span key={f} style={{display:"flex",alignItems:"center",gap:0}}>
+                    <span style={{color:"var(--text-secondary)",padding:"0 3px"}}>{f}</span>
+                    {i<6 && <span style={{color:"var(--text-muted)",padding:"0 1px"}}>+</span>}
                   </span>
                 ))}
+                <span style={{color:"var(--text-muted)",padding:"0 4px"}}>→</span>
+                <span style={{color:"var(--green)",fontWeight:700,padding:"0 3px"}}>ENTRY</span>
               </div>
-              <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"clamp(17px,5vw,24px)",letterSpacing:"-.01em",marginBottom:7}}>
-                Ceritain kondisi chart lo,<br/><span style={{color:"#22d3ee"}}>gue analisa arahnya.</span>
+
+              <h1 style={{
+                fontSize:"clamp(19px,5vw,26px)",fontWeight:700,
+                letterSpacing:"-.02em",lineHeight:1.25,marginBottom:10,
+                color:"var(--text-primary)",
+              }}>
+                Ceritain kondisi chart lo,<br/>
+                <span style={{color:curProv.color,transition:"color 250ms"}}>gue analisa arahnya.</span>
               </h1>
-              <p style={{color:"#8893ad",fontSize:12,lineHeight:1.6,marginBottom:6}}>H4 structure, zona S&D, posisi harga sekarang.</p>
-              <p style={{color:"rgba(47,230,164,.75)",fontSize:11,lineHeight:1.5,marginBottom:12}}>
-                📎 Upload screenshot chart — gue langsung analisa visual
+
+              <p style={{fontSize:13,color:"var(--text-tertiary)",lineHeight:1.6,marginBottom:6}}>
+                H4 structure · zona S&D · posisi harga sekarang
               </p>
-              {/* Provider status */}
-              <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:20}}>
+              <p style={{fontSize:12,color:"var(--text-secondary)",marginBottom:24}}>
+                📎 Upload screenshot chart untuk analisa visual langsung
+              </p>
+
+              {/* Provider status row */}
+              <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:28}}>
                 {PROVIDER_ORDER.map(pid=>{
                   const hasKey = configs[pid]?.key?.length>8;
+                  const p = PROVIDERS[pid];
                   return (
-                    <div key={pid} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:6,background:hasKey?"rgba(47,230,164,.06)":"rgba(13,20,36,.5)",border:hasKey?"1px solid rgba(47,230,164,.2)":"1px solid #1c2740",fontSize:10,color:hasKey?"#2fe6a4":"#4a5568",fontFamily:"'JetBrains Mono',monospace"}}>
-                      <span>{PROVIDERS[pid].icon}</span>
-                      <span>{PROVIDERS[pid].name}</span>
-                      <span>{hasKey?"✓":"○"}</span>
+                    <div key={pid} style={{
+                      display:"flex",alignItems:"center",gap:5,padding:"5px 10px",
+                      borderRadius:99,
+                      background: hasKey ? `rgba(${p.colorRgb},.08)` : "var(--surface-2)",
+                      border: hasKey ? `1px solid rgba(${p.colorRgb},.2)` : "1px solid var(--border)",
+                      fontSize:11.5,color:hasKey?p.color:"var(--text-muted)",
+                      fontFamily:"var(--mono)",fontWeight:500,
+                    }}>
+                      <span className={`dot ${hasKey?"dot-ok":"dot-idle"}`}/>
+                      <span>{p.shortName}</span>
                     </div>
                   );
                 })}
               </div>
-              <div style={{display:"flex",flexDirection:"column",gap:6,maxWidth:500,margin:"0 auto",textAlign:"left"}}>
-                <div style={{fontSize:9.5,color:"#8893ad",fontFamily:"'JetBrains Mono',monospace",letterSpacing:".08em",marginBottom:2}}>PERTANYAAN UMUM:</div>
+
+              {/* Quick prompts */}
+              <div style={{display:"flex",flexDirection:"column",gap:6,maxWidth:520,margin:"0 auto",textAlign:"left"}}>
+                <div className="label" style={{marginBottom:4,paddingLeft:2}}>Pertanyaan Umum</div>
                 {QUICK_PROMPTS.map((q,i)=>(
-                  <button key={i} className="quick-btn" onClick={()=>sendMessage(q)} style={{background:"#0d1424",border:"1px solid #1c2740",borderRadius:10,padding:"9px 12px",color:"#8893ad",fontSize:12,cursor:"pointer",textAlign:"left",transition:"all .15s",lineHeight:1.4,fontFamily:"'Inter',sans-serif"}}>{q}</button>
+                  <button key={i} className="quick-btn" onClick={()=>sendMessage(q)}>{q}</button>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Messages */}
           {messages.map((msg,i)=><Message key={i} msg={msg}/>)}
-          {loading&&(
-            <div style={{display:"flex",justifyContent:"flex-start",marginBottom:12,flexDirection:"column",gap:6}}>
-              {loadingInfo&&<div style={{fontSize:10,color:"#22d3ee",fontFamily:"'JetBrains Mono',monospace",paddingLeft:42,animation:"fadeIn .2s ease"}}>{loadingInfo}</div>}
-              <div style={{display:"flex"}}>
-                <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#0d1424,#1c2740)",border:`1.5px solid ${curProv.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,marginRight:10,marginTop:2}}>{curProv.icon}</div>
-                <div style={{background:"linear-gradient(180deg,rgba(15,22,40,.9),rgba(8,12,24,.95))",border:"1px solid #1c2740",borderRadius:"16px 16px 16px 4px"}}><TypingIndicator/></div>
+
+          {/* Loading state */}
+          {loading && (
+            <div className="msg-anim" style={{display:"flex",justifyContent:"flex-start",marginBottom:16,gap:10}}>
+              <div style={{
+                width:32,height:32,borderRadius:"50%",flexShrink:0,marginTop:2,
+                background:"var(--surface-2)",border:`1px solid rgba(${curProv.colorRgb},.25)`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:13,color:curProv.color,fontFamily:"var(--mono)",fontWeight:700,
+              }}>{curProv.icon}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                {loadingInfo && (
+                  <div style={{fontSize:11,color:"var(--text-tertiary)",fontFamily:"var(--mono)",paddingLeft:2}}>
+                    {loadingInfo}
+                  </div>
+                )}
+                <div className="msg-ai" style={{borderRadius:"16px 16px 16px 4px"}}>
+                  <TypingIndicator/>
+                </div>
               </div>
             </div>
           )}
-          <div ref={bottomRef}/>
+
+          <div ref={bottomRef} style={{height:8}}/>
         </div>
       </div>
 
-      {/* INPUT */}
-      <div style={{padding:"9px 12px 13px",borderTop:"1px solid #1c2740",background:"rgba(7,11,20,.97)",backdropFilter:"blur(20px)",flexShrink:0}}>
-        <div style={{maxWidth:660,margin:"0 auto"}}>
-          {!isEmpty&&(
-            <div style={{display:"flex",gap:5,marginBottom:7,flexWrap:"wrap"}}>
+      {/* ── INPUT AREA ── */}
+      <div style={{
+        padding:"10px 16px 16px",
+        borderTop:"1px solid var(--border-subtle)",
+        background:"rgba(8,9,13,.96)",
+        backdropFilter:"blur(20px)",
+        flexShrink:0,
+      }}>
+        <div style={{maxWidth:680,margin:"0 auto",display:"flex",flexDirection:"column",gap:8}}>
+
+          {/* Quick prompts compact (when chat has messages) */}
+          {!isEmpty && (
+            <div style={{display:"flex",gap:5,flexWrap:"nowrap",overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
               {QUICK_PROMPTS.slice(0,3).map((q,i)=>(
-                <button key={i} className="quick-btn" onClick={()=>sendMessage(q)} style={{background:"transparent",border:"1px solid #1c2740",borderRadius:7,padding:"3px 8px",color:"#8893ad",fontSize:10,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",transition:"all .15s",whiteSpace:"nowrap"}}>
-                  {q.length>34?q.slice(0,34)+"…":q}
+                <button key={i} onClick={()=>sendMessage(q)} style={{
+                  flexShrink:0,padding:"5px 10px",borderRadius:99,
+                  background:"var(--surface-2)",border:"1px solid var(--border)",
+                  color:"var(--text-tertiary)",fontSize:11,cursor:"pointer",
+                  fontFamily:"var(--mono)",transition:"all 160ms",whiteSpace:"nowrap",
+                }}
+                  onMouseEnter={e=>{e.target.style.borderColor="var(--border-focus)";e.target.style.color="var(--text-secondary)";}}
+                  onMouseLeave={e=>{e.target.style.borderColor="var(--border)";e.target.style.color="var(--text-tertiary)";}}
+                >
+                  {q.length>36?q.slice(0,36)+"…":q}
                 </button>
               ))}
             </div>
           )}
 
+          {/* File previews */}
           {files.length > 0 && (
-            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8,padding:"8px 10px",background:"rgba(34,211,238,.04)",borderRadius:10,border:"1px solid rgba(34,211,238,.15)"}}>
+            <div style={{
+              display:"flex",flexWrap:"wrap",gap:8,padding:"10px 12px",
+              background:"var(--surface-2)",borderRadius:var_r12(),border:"1px solid var(--border)",
+            }}>
               {files.map((f,i)=><FilePreview key={i} f={f} onRemove={()=>setFiles(prev=>prev.filter((_,j)=>j!==i))}/>)}
             </div>
           )}
-          {fileErr && <div style={{fontSize:11,color:"#ff6b6b",marginBottom:6,fontFamily:"'JetBrains Mono',monospace",padding:"4px 8px",background:"rgba(255,107,107,.08)",borderRadius:6,border:"1px solid rgba(255,107,107,.2)"}}>⚠️ {fileErr}</div>}
 
+          {/* Error */}
+          {fileErr && (
+            <div style={{
+              fontSize:11.5,color:"#fca5a5",padding:"7px 12px",
+              background:"rgba(239,68,68,.08)",borderRadius:var_r8(),border:"1px solid rgba(239,68,68,.2)",
+              fontFamily:"var(--mono)",
+            }}>⚠ {fileErr}</div>
+          )}
+
+          {/* Hidden file input */}
           <input ref={fileRef} type="file" multiple accept="*/*" style={{display:"none"}} onChange={e=>{addFiles(Array.from(e.target.files));e.target.value="";}}/>
 
-          <div style={{display:"flex",gap:8,alignItems:"flex-end",background:"#0d1424",border:"1px solid #1c2740",borderRadius:14,padding:"9px 9px 9px 13px"}}>
-            <button className="upload-btn" onClick={()=>fileRef.current?.click()} disabled={loading} style={{width:34,height:34,borderRadius:9,flexShrink:0,background:"rgba(47,230,164,.08)",border:"1px solid rgba(47,230,164,.25)",color:"#2fe6a4",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,transition:"all .15s"}}>📎</button>
+          {/* Chat input box */}
+          <div style={{
+            display:"flex",gap:8,alignItems:"flex-end",
+            background:"var(--surface)",
+            border:"1px solid var(--border-focus)",
+            borderRadius:var_r16(),
+            padding:"10px 10px 10px 14px",
+            transition:"border-color 180ms",
+            boxShadow:"var(--shadow-sm)",
+          }}>
+            <button
+              className="icon-btn"
+              onClick={()=>fileRef.current?.click()}
+              disabled={loading}
+              style={{width:36,height:36,borderRadius:var_r8(),marginBottom:1,flexShrink:0}}
+              title="Upload file"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+
             <textarea
               ref={inputRef}
               value={input}
               onChange={e=>setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder={`Kondisi ${pair||"chart"} lo... H4, S&D, harga sekarang (atau upload screenshot)`}
+              placeholder={`Kondisi ${pair||"chart"} lo... H4, S&D, posisi harga (atau upload screenshot)`}
               rows={1}
-              style={{flex:1,background:"transparent",border:"none",color:"#e7ecf7",fontSize:13,lineHeight:1.55,resize:"none",maxHeight:100,overflowY:"auto",caretColor:"#22d3ee",fontFamily:"'Inter',sans-serif"}}
-              onInput={e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,100)+"px";}}
+              className="chat-textarea"
+              onInput={e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";}}
             />
-            <button className="send-btn" onClick={()=>sendMessage()} disabled={!canSend} style={{width:34,height:34,borderRadius:9,flexShrink:0,background:"rgba(34,211,238,.12)",border:"1px solid rgba(34,211,238,.3)",color:"#22d3ee",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,transition:"all .15s"}}>↑</button>
+
+            <button
+              className="send-btn"
+              onClick={()=>sendMessage()}
+              disabled={!canSend}
+              style={{marginBottom:1,flexShrink:0}}
+              title="Kirim"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
           </div>
-          <div style={{textAlign:"center",marginTop:7,fontSize:9.5,color:"#2a3a5c",fontFamily:"'JetBrains Mono',monospace"}}>DISIPLIN PADA SOP &gt; FEELING — Auto-fallback: {PROVIDER_ORDER.filter(p=>configs[p]?.key?.length>8).map(p=>PROVIDERS[p].icon+" "+PROVIDERS[p].name).join(" → ") || "belum setup"}</div>
+
+          {/* Footer hint */}
+          <div style={{
+            textAlign:"center",fontSize:10,color:"var(--text-muted)",fontFamily:"var(--mono)",letterSpacing:".04em",
+          }}>
+            Disiplin pada SOP &gt; Feeling
+            {configuredProviders.length > 1 && (
+              <span style={{color:"var(--text-muted)"}}>
+                {" · "}Fallback: {configuredProviders.map(p=>PROVIDERS[p].shortName).join(" → ")}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -857,6 +1424,11 @@ function App() {
     </div>
   );
 }
+
+// tiny helpers to avoid JSX string template issues
+function var_r12(){ return "var(--r12)"; }
+function var_r16(){ return "var(--r16)"; }
+function var_r8(){ return "var(--r8)"; }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
