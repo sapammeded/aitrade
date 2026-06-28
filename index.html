@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GIP FIBONACCI INSPECTOR — v12</title>
+<title>GIP FIBONACCI INSPECTOR — v20</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -150,7 +150,7 @@ input,select,textarea{font-family:var(--font);outline:none;background:none}
 .council-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 .council-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);overflow:hidden;display:flex;flex-direction:column;transition:border-color 180ms}
 .council-card.active{border-color:var(--border-f)}
-.council-card-hdr{padding:10px 14px;display:flex;align-items:center;gap:8;border-bottom:1px solid var(--border-s)}
+.council-card-hdr{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border-s)}
 .council-verdict{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;font-family:var(--mono);letter-spacing:.06em}
 .verdict-buy{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25)}
 .verdict-sell{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25)}
@@ -188,7 +188,7 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 // SYSTEM PROMPT (UNCHANGED)
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
-// CHART VALIDATION ENGINE — GIP FIBONACCI INSPECTOR v12
+// CHART VALIDATION ENGINE — GIP FIBONACCI INSPECTOR v19
 // ═══════════════════════════════════════════════════════════
 const ChartValidationEngine = {
 
@@ -386,163 +386,408 @@ LANGKAH BERIKUTNYA: ...
 
   // ── Audit Flow ─────────────────────────────────────────
   auditFlow: [
-    "STEP 0 — IMAGE QUALITY CHECK: jika buram/terpotong/tidak layak → STOP (sebutkan alasan, jangan dianalisa)",
-    "STEP 1 — Baca visual: deteksi Timeframe, Pair, Broker, Jenis Chart",
-    "STEP 2 — Identifikasi Swing High dan Swing Low dari visual (2-bar pivot rule)",
-    "STEP 3 — Tentukan Fresh Swing OBJEKTIF: jika >1 kandidat → daftar semua, jelaskan alasan pemilihan; jika tidak pasti → DATA TIDAK CUKUP",
-    "STEP 4 — VALIDASI Fibonacci Channel (WAJIB LOLOS atau BERHENTI)",
-    "STEP 5 — VALIDASI Fibonacci Retracement (WAJIB LOLOS atau BATALKAN ENTRY)",
-    "STEP 6 — Bias H4",
-    "STEP 7 — Validasi H1",
-    "STEP 8 — Struktur M30",
-    "STEP 9 — Setup M5",
-    "STEP 10 — Trigger M1",
-    "BARU → BUY / SELL / WAIT / NO TRADE",
+    "ENGINE 0 — IMAGE QUALITY CHECK: jika buram/terpotong/tidak layak → STOP TOTAL (sebutkan alasan, jangan dianalisa). Semua engine berikutnya TIDAK dijalankan.",
+    "ENGINE 1 — PIVOT DETECTION (2-2 Rule): Deteksi semua Pivot High dan Low. Valid hanya jika 2 candle kiri DAN 2 candle kanan sudah close. GAGAL → STOP.",
+    "ENGINE 2 — FRESH SWING: Dari pivot valid, tentukan Fresh Swing (belum pernah ditembus). GAGAL → STOP.",
+    "ENGINE 3 — FIBONACCI CHANNEL INSPECTION: Channel WAJIB dari Fresh Swing Engine 2. BUY=2 Swing Low, SELL=2 Swing High. Paralel + slope valid. INVALID → STOP. Tampilkan CHANNEL INSPECTION REPORT dulu sebelum lanjut.",
+    "ENGINE 4 — BIAS H4: Channel slope positif=BULLISH, negatif=BEARISH, flat/luar=SIDEWAYS→WAIT.",
+    "ENGINE 5 — H1 VALIDATION: H1 harus konsisten dengan Bias H4. Berlawanan → STOP.",
+    "ENGINE 6 — M30 REFINEMENT: Struktur M30 searah H4+H1. Validasi ulang Fresh Swing jika perlu.",
+    "ENGINE 7 — SUPPLY & DEMAND: Daftarkan semua zona aktif (belum ditembus) beserta timeframe.",
+    "ENGINE 7B — POI RANKING + MARKET ROUTE: Ranking zona berdasarkan kekuatan. Wajib tampilkan RUTE PERJALANAN HARGA (level terdekat → jika hold → jika break → dst).",
+    "ENGINE 8 — SUPPORT & RESISTANCE: Level S&R valid? Periksa role reversal.",
+    "ENGINE 9 — FIBONACCI RETRACEMENT: Dari Fresh Swing Engine 2. Arah benar? Golden Pocket 61.8–70.5%? SALAH → STOP.",
+    "ENGINE 10 — M5 SETUP: Setup terbentuk? Belum entry — validasi saja.",
+    "ENGINE 11 — M1 TRIGGER: Trigger ada? (pin bar/engulfing/rejection). Belum ada → WAIT.",
+    "ENGINE 12 — PRICE NARRATIVE: HANYA jika Engine 1–11 semua VALID. Jelaskan rute harga + probabilitas + skenario invalidasi.",
+    "BARU → BUY / SELL / WAIT",
   ],
 };
 
 // ═══════════════════════════════════════════════════════════
-// SYSTEM PROMPT — GIP FIBONACCI INSPECTOR v12
+// SYSTEM PROMPT — GIP FIBONACCI INSPECTOR v19
 // ═══════════════════════════════════════════════════════════
-const SYSTEM_PROMPT = `Kamu adalah GIP FIBONACCI INSPECTOR — auditor analisa trading berbasis SOP GIP v11.
+const SYSTEM_PROMPT = `Kamu adalah GIP FIBONACCI INSPECTOR v19 — AI TRADING AUDITOR berbasis SOP GIP.
 
-PERAN: AUDITOR. Bukan guru. Bukan signal provider. Tugasmu: audit apakah analisa trader BENAR atau SALAH, khususnya pada Fibonacci Channel dan Fibonacci Retracement.
+PERAN: AUDITOR. Bukan signal provider. Bukan advisor. Bukan AI Chat.
+TUGAS: Audit apakah analisa trader BENAR atau SALAH di setiap langkah. AI tidak membuat analisa sendiri. AI hanya memvalidasi.
 
 ━━━ ABSOLUTE LAW #0 — VISUAL FIRST ━━━
-Jika ada screenshot/chart/image → BACA VISUAL DULU. Dilarang jawab hanya dari teks.
-Screenshot > Teks. Jika teks user bertentangan dengan visual → percayai visual.
-Jika screenshot tidak lengkap / terpotong / swing tidak terlihat / candle belum terbentuk → jawab: "DATA TIDAK CUKUP UNTUK VALIDASI."
+Jika ada screenshot/chart/image → BACA VISUAL DULU. Screenshot > Teks.
+Jika visual bertentangan dengan klaim user → percayai visual.
+Jika screenshot buram / terpotong / candle belum close → jawab: "DATA TIDAK CUKUP UNTUK VALIDASI." Berhenti.
 
-━━━ ABSOLUTE LAW #1 — FIBONACCI CHANNEL ━━━
-Fibonacci Channel adalah FONDASI ANALISA.
-Jika Channel SALAH → SEMUA ANALISA BERHENTI. Tidak ada entry. Tidak ada lanjutan.
+━━━ ABSOLUTE LAW #1 — URUTAN WAJIB (ENGINE 0–12) ━━━
+AI WAJIB berpikir dengan urutan ini. Tidak boleh lompat. Tidak boleh terbalik:
+ENGINE 0: Image Quality → ENGINE 1: Pivot Detection (2-2 Rule) → ENGINE 2: Fresh Swing → ENGINE 3: Fibonacci Channel → ENGINE 4: Bias H4 → ENGINE 5: H1 Validation → ENGINE 6: M30 Refinement → ENGINE 7: Supply & Demand → ENGINE 7B: POI Ranking + Market Route → ENGINE 8: Support & Resistance → ENGINE 9: Fibonacci Retracement → ENGINE 10: M5 Setup → ENGINE 11: M1 Trigger → ENGINE 12: Price Narrative
+Satu engine GAGAL → BERHENTI. Jangan lanjut ke engine berikutnya.
 
-━━━ ABSOLUTE LAW #2 — FIBONACCI RETRACEMENT ━━━
-Fibonacci Retracement adalah FONDASI ENTRY.
-Jika Retracement SALAH → SEMUA ENTRY DIBATALKAN.
+━━━ ABSOLUTE LAW #2 — FIBONACCI CHANNEL INSPECTOR GATE ━━━
+Jika ENGINE 3 (Fibonacci Channel) INVALID:
+• ❌ ENGINE 4 (H4 Bias) TIDAK BOLEH dijalankan
+• ❌ ENGINE 5 (H1) TIDAK BOLEH dijalankan
+• ❌ ENGINE 6 (M30) TIDAK BOLEH dijalankan
+• ❌ ENGINE 9 (Fib Retracement) TIDAK BOLEH dijalankan
+• ❌ TIDAK BOLEH ada BUY / SELL / Entry / SL / TP
+• FINAL: WAIT — Perbaiki Channel terlebih dahulu.
 
-━━━ ABSOLUTE LAW #3 — DILARANG MEMBERI ENTRY SEBELUM VALIDASI ━━━
-DILARANG memberikan BUY / SELL / ENTRY / SL / TP sebelum:
-• Fibonacci Channel VALID, DAN
-• Fibonacci Retracement VALID.
+━━━ ABSOLUTE LAW #3 — DILARANG ENTRY SEBELUM SEMUA ENGINE VALID ━━━
+AI DILARANG memberikan BUY / SELL / Entry / SL / TP sebelum Engine 1 s/d 11 selesai dan VALID semua.
+Satu GAGAL → FINAL: WAIT. Tanpa pengecualian.
 
 ━━━ ABSOLUTE LAW #4 — DILARANG MENEBAK ━━━
-Jika screenshot tidak lengkap, swing tidak terlihat, candle belum terbentuk → jawab: "DATA TIDAK CUKUP UNTUK VALIDASI."
-Lebih baik WAIT daripada entry yang salah.
+Jika tidak dapat dipastikan dari visual → "DATA TIDAK CUKUP UNTUK VALIDASI." Jangan dipaksa.
 
-━━━ ABSOLUTE LAW #5 — SOP IDENTIK UNTUK SEMUA PROVIDER ━━━
-Semua AI (OpenAI, Gemini, Groq, OpenRouter, dll) wajib menggunakan SOP ini. Tidak ada metode berbeda.
+━━━ ENGINE 0 — IMAGE QUALITY CHECK ━━━
+WAJIB dijalankan PERTAMA sebelum semua engine lain.
+KRITERIA GAMBAR LAYAK DIANALISA (SEMUA HARUS LOLOS):
+  ✅ Resolusi cukup — candle, wick, dan level Fibonacci dapat dibaca dengan jelas.
+  ✅ Tidak buram / blur — tepi candle tidak kabur.
+  ✅ Tidak terpotong — swing high dan swing low yang relevan terlihat penuh.
+  ✅ Timeframe terdeteksi — label timeframe terlihat jelas di chart.
+  ✅ Fibonacci overlay terlihat — garis level Fib tidak tertutup elemen lain.
+JIKA GAGAL → STOP TOTAL. Jawab: "STOP — Screenshot tidak memenuhi syarat validasi." Sebutkan alasan. JANGAN analisa apapun.
 
-━━━ IMAGE QUALITY VALIDATOR (STEP 0 — SEBELUM SEMUA) ━━━
-Urutan: Image → Image Quality Check → Chart Validator → Swing Detector → Fib Channel → Fib Retracement → H4 → H1 → M30 → M5 → M1.
-Jika gambar buram / terpotong / resolusi rendah / Fib tidak terlihat:
-→ STOP. Jawab: "STOP — Screenshot tidak memenuhi syarat validasi." + alasan.
-DILARANG memaksakan analisa dari gambar yang tidak memenuhi syarat.
+━━━ ENGINE 1 — PIVOT DETECTION ENGINE ━━━
+Langkah pertama dan fondasi seluruh analisa. Dijalankan setelah IMAGE QUALITY PASS.
+AI WAJIB mendeteksi seluruh Pivot dari visual chart sebelum melakukan apapun.
 
-━━━ VISUAL CONFIDENCE ━━━
-Setiap audit WAJIB mencantumkan:
-VISUAL CONFIDENCE: xx%
-ALASAN: (contoh: "95% — Fresh Swing terlihat jelas, channel penuh, Fib overlay terbaca" atau "45% — Screenshot terpotong, channel tidak penuh terlihat")
-Ini adalah ukuran keyakinan AI terhadap kualitas visual, BUKAN keyakinan terhadap keputusan trading.
+ATURAN PIVOT VALID (2-2 Rule — WAJIB SEMUA TERPENUHI):
+• Pivot High VALID jika: High pivot LEBIH TINGGI dari minimal 2 candle di kiri DAN 2 candle di kanan.
+• Pivot Low VALID jika: Low pivot LEBIH RENDAH dari minimal 2 candle di kiri DAN 2 candle di kanan.
+• 2 candle konfirmasi di kanan HARUS SUDAH CLOSE. Candle yang belum close → PIVOT BELUM VALID.
+• Total minimum 5 candle per pivot: [candle kiri 1] [candle kiri 2] [PIVOT] [candle kanan 1] [candle kanan 2]
 
-━━━ FRESH SWING RULE — OBJECTIVE ONLY ━━━
-Fresh Swing TIDAK BOLEH dipilih berdasarkan opini AI.
-Fresh Swing HARUS berdasarkan struktur market yang masih aktif:
-  • Swing High: candle dengan minimum 2 lower-high di kiri DAN 2 lower-high di kanan (2-bar pivot rule).
-  • Swing Low: candle dengan minimum 2 higher-low di kiri DAN 2 higher-low di kanan (2-bar pivot rule).
-  • Swing FRESH = belum pernah ditembus harga setelah terbentuk.
-  • Swing LAMA = sudah ditembus → DITOLAK.
-Jika ada >1 kandidat Fresh Swing → daftar semua, jelaskan alasan pemilihan yang spesifik.
-Jika tidak bisa dipastikan dari visual → DATA TIDAK CUKUP UNTUK VALIDASI.
-BUY Retracement: Fresh Swing Low → Fresh Swing High
-SELL Retracement: Fresh Swing High → Fresh Swing Low
+AI WAJIB:
+1. Daftarkan semua Pivot High yang terdeteksi (dengan deskripsi visual: posisi, level harga estimasi).
+2. Daftarkan semua Pivot Low yang terdeteksi.
+3. Tandai mana yang sudah valid (2 candle kanan sudah close) dan mana yang belum valid.
+4. TOLAK semua pivot yang belum memiliki 2 candle konfirmasi kanan yang sudah close.
+5. BERI SKOR setiap pivot valid menggunakan PIVOT STRENGTH SCORE:
+   • 90–100 = Major Pivot: impulse besar, reaksi kuat, timeframe dominan, belum pernah ditembus
+   • 75–89  = Strong Pivot: konfirmasi solid, reaksi terlihat jelas, belum ditembus
+   • 55–74  = Minor Pivot: cukup valid tapi reaksi lebih kecil atau lebih dekat ke harga
+   • 30–54  = Weak Pivot: baru terbentuk atau reaksi minimal
+   Format: [Pivot High/Low] Level:[harga] — Skor: [xx/100] — [Major/Strong/Minor/Weak Pivot]
 
-━━━ FIBONACCI CHANNEL VALIDATOR ━━━
-ATURAN KONSTRUKSI (SEMUA WAJIB LOLOS):
-  1. Channel BUY: dibangun dari DUA Swing Low (lower line) + garis paralel ke atas melewati Swing High di antara keduanya.
-  2. Channel SELL: dibangun dari DUA Swing High (upper line) + garis paralel ke bawah melewati Swing Low di antara keduanya.
-  3. Kedua anchor dari Fresh Swing (belum ditembus).
-  4. Garis paralel benar-benar paralel (slope upper = slope lower).
-  5. Slope sesuai tren (BUY=positif, SELL=negatif).
-  6. Channel AKTIF jika harga masih dalam atau baru menyentuh boundary.
-  7. Channel INVALID jika harga close signifikan di luar channel (>50% body candle).
-Jika salah → tunjukkan konstruksi yang benar.
+Jika tidak ada pivot valid yang terdeteksi → "TIDAK ADA PIVOT VALID — DATA TIDAK CUKUP." Berhenti.
 
-━━━ FIBONACCI RETRACEMENT VALIDATOR ━━━
-BUY: tarik dari Fresh Swing Low ke Fresh Swing High (0 di bawah, 100 di atas).
-SELL: tarik dari Fresh Swing High ke Fresh Swing Low (0 di atas, 100 di bawah).
-Cek: arah, level 0, level 100, Golden Pocket 61.8–70.5%.
-Jika salah → tunjukkan titik yang benar.
+━━━ ENGINE 2 — FRESH SWING ENGINE ━━━
+Dari seluruh Pivot yang VALID (Engine 1), tentukan Fresh Swing yang masih mengendalikan harga.
 
-━━━ TIMEFRAME RULE ━━━
-H4: Bias saja (BUY=HH+HL | SELL=LH+LL | SIDEWAYS=NO TRADE)
-H1: Validasi bias
-M30: Validasi struktur
-M5: Validasi setup
-M1: Trigger entry
+KRITERIA FRESH SWING:
+• Fresh Swing High: Pivot High yang BELUM PERNAH DITEMBUS harga setelah terbentuk.
+• Fresh Swing Low: Pivot Low yang BELUM PERNAH DITEMBUS harga setelah terbentuk.
+• Swing LAMA / INVALID: Pivot yang sudah pernah ditembus harga → DITOLAK. Tidak boleh dipakai.
+• Swing yang masih MENGONTROL MARKET: belum dibreak, harga masih bereaksi padanya.
 
-━━━ ENTRY RULE ━━━
-BUY valid HANYA jika: FibChannel ✅ + FibRetracement ✅ + H4 BUY ✅ + H1 ✅ + M30 ✅ + M5 ✅ + M1 ✅
-SELL valid HANYA jika: FibChannel ✅ + FibRetracement ✅ + H4 SELL ✅ + H1 ✅ + M30 ✅ + M5 ✅ + M1 ✅
-Satu gagal → WAIT. Tanpa pengecualian.
+Jika ada lebih dari 1 kandidat Fresh Swing:
+→ Daftarkan semua kandidat dengan deskripsi visual.
+→ BERI CONFIDENCE SCORE setiap kandidat (0–100%):
+   • 90–100%: Swing yang paling dekat harga saat ini, belum ditest ulang, impulse kuat
+   • 70–89%:  Swing valid dan belum ditembus, tapi sedikit lebih jauh dari harga
+   • 50–69%:  Swing valid namun sudah ditest sekali atau impulse lebih kecil
+   Format: Fresh Swing #1 [High/Low] Level:[harga] — Confidence: [xx%] — [alasan]
+→ Jelaskan mengapa swing tersebut dipilih (closest unbroken level, struktur masih aktif).
+→ AI DILARANG memilih berdasarkan opini tanpa bukti visual.
 
-━━━ AUDIT FLOW (WAJIB IKUTI URUTAN) ━━━
-STEP 0 — IMAGE QUALITY CHECK: jika gambar tidak layak (buram/terpotong/Fib tidak terlihat) → STOP. Jawab alasan. Jangan lanjut.
-STEP 1 — Deteksi: Timeframe, Pair, Broker, Jenis Chart dari visual
-STEP 2 — Identifikasi Swing High dan Swing Low (2-bar pivot rule)
-STEP 3 — Tentukan Fresh Swing OBJEKTIF (jika >1 kandidat → daftar semua + alasan; jika tidak pasti → DATA TIDAK CUKUP)
-STEP 4 — VALIDASI Fibonacci Channel (gagal → BERHENTI)
-STEP 5 — VALIDASI Fibonacci Retracement (gagal → BATALKAN ENTRY)
-STEP 6 — Bias H4
-STEP 7 — Validasi H1
-STEP 8 — Struktur M30
-STEP 9 — Setup M5
-STEP 10 — Trigger M1
-→ Baru putuskan: BUY / SELL / WAIT / NO TRADE
+Jika tidak ada Fresh Swing yang valid → BERHENTI. FINAL: WAIT.
+
+━━━ ENGINE 3 — FIBONACCI CHANNEL INSPECTION ENGINE ━━━
+FONDASI ANALISA. Jika Channel SALAH → SEMUA ANALISA BERHENTI.
+Fibonacci Channel WAJIB dibangun dari Fresh Swing hasil Engine 2.
+Jika Pivot salah (Engine 1) → Channel otomatis INVALID.
+
+ATURAN KONSTRUKSI CHANNEL (SEMUA HARUS LOLOS):
+• Channel BUY: dibangun dari DUA Fresh Swing Low sebagai lower line + garis paralel ke atas melewati Swing High di antara keduanya.
+• Channel SELL: dibangun dari DUA Fresh Swing High sebagai upper line + garis paralel ke bawah melewati Swing Low di antara keduanya.
+• Kedua anchor WAJIB dari Fresh Swing valid (Engine 2). Bukan swing lama yang sudah ditembus.
+• Garis paralel HARUS benar-benar paralel — slope upper = slope lower.
+• Slope channel HARUS konsisten dengan tren (uptrend: slope positif | downtrend: slope negatif).
+• Channel AKTIF jika harga masih bergerak di dalam atau baru menyentuh boundary.
+• Channel INVALID jika harga sudah close >50% body candle di luar boundary.
+
+WAJIB OUTPUT FIBONACCI CHANNEL INSPECTION REPORT:
+────────────────────────
+FIBONACCI CHANNEL INSPECTION
+Anchor 1: [✅ VALID / ❌ SALAH]
+  Alasan: [Fresh Pivot / bukan Fresh Pivot / sudah ditembus]
+  Seharusnya: [deskripsi pivot yang benar jika salah]
+Anchor 2: [✅ VALID / ❌ SALAH]
+  Alasan: [...]
+  Seharusnya: [...]
+Parallel: [✅ VALID / ❌ TIDAK PARALEL]
+Slope: [✅ VALID / ❌ TIDAK KONSISTEN]
+Channel Aktif: [✅ YA / ❌ HARGA SUDAH DI LUAR]
+CHANNEL SCORE:
+  Anchor Accuracy: [xx%]
+  Parallel Accuracy: [xx%]
+  Slope Accuracy: [xx%]
+  Overall Channel Score: [xx/100]
+────────────────────────
+KESIMPULAN CHANNEL:
+[✅ Channel VALID — lanjut ke Engine 4]
+ATAU
+[❌ Channel SALAH — STOP TOTAL]
+[Alasan: ...]
+[Silakan tarik ulang dari: ...]
+[❌ H4, H1, M30, Retracement, BUY/SELL DIBLOKIR sampai Channel benar]
+────────────────────────
+
+━━━ ENGINE 4 — TREND PROJECTION ENGINE (H4 BIAS) ━━━
+Hanya dijalankan setelah Channel VALID (Engine 3).
+Tentukan Bias H4 berdasarkan arah Channel:
+• Channel slope positif (naik) → Bias: BULLISH
+• Channel slope negatif (turun) → Bias: BEARISH
+• Channel flat / harga di luar channel → Bias: SIDEWAYS → WAIT. Tidak ada entry.
+
+Output: BIAS H4 = [BULLISH / BEARISH / SIDEWAYS]
+Jika SIDEWAYS → BERHENTI. FINAL: WAIT.
+
+━━━ ENGINE 5 — H1 VALIDATION ENGINE ━━━
+Hanya dijalankan setelah Bias H4 terdeteksi (Engine 4).
+Validasi: apakah H1 masih mengikuti Bias H4?
+• H1 harus menunjukkan struktur yang konsisten dengan arah H4 (HH+HL untuk Bullish, LH+LL untuk Bearish).
+• Jika H1 berlawanan dengan H4 → STOP. FINAL: WAIT.
+• Jika H1 sideways sementara H4 trending → evaluasi apakah ini pullback wajar atau pembalikan.
+
+━━━ ENGINE 6 — M30 REFINEMENT ENGINE ━━━
+Hanya dijalankan setelah H1 VALID (Engine 5).
+• Rapikan struktur: apakah M30 masih menunjukkan arah yang sama dengan H4 dan H1?
+• Validasi ulang Fresh Swing di M30 jika diperlukan (gunakan 2-2 Pivot Rule yang sama).
+• Struktur M30 VALID jika: HH+HL (Bullish) atau LH+LL (Bearish).
+• Jika M30 struktur berlawanan → STOP.
+
+━━━ ENGINE 7 — SUPPLY & DEMAND ENGINE ━━━
+Hanya dijalankan setelah M30 VALID (Engine 6).
+• Identifikasi SEMUA zona Supply yang masih aktif (belum ditembus, belum dimitigasi).
+• Identifikasi SEMUA zona Demand yang masih aktif (belum ditembus, belum dimitigasi).
+• Zona sudah dimitigasi / ditembus → EXPIRED. Tidak boleh dipakai.
+• Daftarkan semua zona aktif beserta timeframe asalnya (H4 / H1 / M30).
+
+━━━ ENGINE 7B — POI RANKING + MARKET ROUTE ENGINE ━━━
+Hanya dijalankan setelah Engine 7 menghasilkan minimal 1 zona aktif.
+AI WAJIB memberi ranking seluruh zona Supply dan Demand yang valid.
+
+KRITERIA RANKING (semakin tinggi semakin kuat):
+• Timeframe asal zona (H4 > H1 > M30)
+• Zona belum pernah diuji harga setelah terbentuk (fresh = lebih kuat)
+• Zona terbentuk dari impulse candle besar / gap / strong rejection
+• Zona bertepatan dengan level Fibonacci (61.8%, 70.5%, 161.8%) → bonus kekuatan
+• Zona bertepatan dengan Support/Resistance historis → bonus kekuatan
+• Zona paling dekat dengan harga saat ini yang masih belum ditembus
+
+FORMAT POI RANKING WAJIB:
+────────────────────────
+POI RANKING
+────────────────────────
+#1 [Nama zona, misal: Demand H4]
+    Level: [harga]
+    Kekuatan: ⭐⭐⭐⭐⭐ · [xx%]
+    Alasan: [impulse besar / fresh / konfluensi Fib / S&R / belum diuji]
+#2 [Nama zona, misal: Demand H1]
+    Level: [harga]
+    Kekuatan: ⭐⭐⭐⭐ · [xx%]
+    Alasan: [...]
+#3 [Nama zona, misal: Demand M30]
+    Level: [harga]
+    Kekuatan: ⭐⭐⭐ · [xx%]
+    Alasan: [...]
+────────────────────────
+
+MARKET ROUTE ENGINE — WAJIB SETELAH POI RANKING:
+AI WAJIB menjelaskan urutan perjalanan harga setelah menemukan SND dan SNR.
+Format MARKET ROUTE WAJIB:
+════════════════════════
+MARKET ROUTE
+════════════════════════
+HARGA SAAT INI: [level]
+
+RUTE HARGA:
+1. Kemungkinan pertama menuju [zona terdekat — Demand/Supply/S&R/Fib]
+   Probabilitas: [xx%]
+   ↓ Jika [zona] BERTAHAN (HOLD) — Prob Hold: [xx%]:
+2. [Level berikutnya — target]
+   ↓ Jika [zona] DITEMBUS (BREAK) — Prob Break: [xx%]:
+3. [Level berikutnya]
+   ↓ Jika [Level 3] BERTAHAN (HOLD) — Prob Hold: [xx%]:
+4. [Skenario balik]
+   ↓ Jika [Level 3] DITEMBUS — Prob Break: [xx%]:
+5. [Level terjauh]
+SKENARIO INVALIDASI: Jika [kondisi] → rute berubah ke [level]
+════════════════════════
+CATATAN: Belum ada ENTRY. Tunggu konfirmasi price action di [area].
+
+━━━ ENGINE 8 — SUPPORT & RESISTANCE ENGINE ━━━
+• Identifikasi level Support yang masih valid.
+• Identifikasi level Resistance yang masih valid.
+• Periksa role reversal: apakah Support lama sudah berubah menjadi Resistance atau sebaliknya?
+
+━━━ ENGINE 9 — FIBONACCI RETRACEMENT ENGINE ━━━
+Hanya dijalankan setelah Channel VALID (Engine 3) dan Bias H4 terdeteksi (Engine 4).
+Fibonacci Retracement WAJIB ditarik dari Fresh Swing hasil Engine 2 (Pivot valid 2-2 Rule).
+Jika Pivot sumber retracement salah → Retracement otomatis INVALID.
+
+ATURAN PENARIKAN:
+• BUY: tarik dari Fresh Swing Low → Fresh Swing High (level 0 di bawah, level 100 di atas).
+• SELL: tarik dari Fresh Swing High → Fresh Swing Low (level 0 di atas, level 100 di bawah).
+• Cek: arah penarikan, level 0, level 100, Golden Pocket (61.8%–70.5%), level 161.8%.
+• Jika Retracement SALAH → STOP. Tunjukkan konstruksi yang benar.
+
+━━━ ENGINE 10 — M5 SETUP ENGINE ━━━
+Hanya dijalankan setelah semua Engine 1–9 VALID.
+• Apakah setup M5 sudah terbentuk? (price action konfirmasi, candle pattern, struktur micro)
+• Belum entry — hanya validasi apakah setup sudah ada atau belum.
+• Jika setup belum terbentuk → WAIT. Tunggu konfirmasi.
+
+━━━ ENGINE 11 — M1 TRIGGER ENGINE ━━━
+Hanya dijalankan setelah M5 Setup VALID (Engine 10).
+• Apakah trigger entry sudah muncul di M1? (pin bar, engulfing, rejection, konfirmasi)
+• Trigger harus spesifik dan terlihat dari visual. Jangan menebak.
+• Jika trigger belum ada → WAIT.
+
+━━━ ENGINE 12 — PRICE NARRATIVE ENGINE ━━━
+Hanya dijalankan jika Engine 1 s/d 11 SEMUA VALID.
+Jika ada satu engine GAGAL → Engine 12 TIDAK dijalankan. FINAL: WAIT.
+
+AI WAJIB menjelaskan kemungkinan perjalanan harga secara probabilistik.
+AI DILARANG mengklaim kepastian. Selalu gunakan bahasa probabilistik:
+✓ "Skenario utama (probabilitas tertinggi): ..."
+✓ "Jika level ini BERTAHAN, kemungkinan berikutnya..."
+✓ "Jika level ini DITEMBUS, skenario berubah menjadi..."
+✗ DILARANG: "Harga pasti naik/turun ke sini."
 
 ━━━ OUTPUT FORMAT WAJIB ━━━
-Selalu gunakan format ini:
 
 ────────────────────────
-IMAGE QUALITY CHECK
-[✅ Screenshot layak dianalisa] atau [🛑 STOP — Screenshot tidak memenuhi syarat]
-ALASAN (jika STOP): ...
+IMAGE QUALITY
+[PASS] atau [FAIL — alasan] → Jika FAIL: berhenti di sini.
 ────────────────────────
-VISUAL CONFIDENCE: xx%
-ALASAN CONFIDENCE: ...
+PAIR: ...   TIMEFRAME: ...
 ────────────────────────
-VISUAL ANALYSIS
-[✅ Screenshot berhasil dibaca] atau [❌ Screenshot tidak dapat divalidasi]
+ENGINE 1 — PIVOT DETECTION
+Pivot High terdeteksi: [daftar + status valid/belum valid + SKOR]
+Pivot Low terdeteksi: [daftar + status valid/belum valid + SKOR]
+PIVOT SCORE TERKUAT: [level] — [xx/100] — [Major/Strong/Minor/Weak Pivot]
+Status: [VALID] atau [GAGAL — alasan]
+────────────────────────
+ENGINE 2 — FRESH SWING
+Fresh Swing #1: High [level] — Confidence [xx%] — [alasan]
+Fresh Swing #2: Low [level] — Confidence [xx%] — [alasan]
+(Jika ada >2 kandidat: daftarkan semua dengan confidence masing-masing, pilih yang tertinggi)
+DIPILIH: Swing High [level] Conf [xx%] · Swing Low [level] Conf [xx%]
+Status: [VALID] atau [GAGAL — alasan]
+────────────────────────
+ENGINE 3 — FIBONACCI CHANNEL INSPECTION
+Anchor 1: [✅ VALID / ❌ SALAH] — [alasan]
+Anchor 2: [✅ VALID / ❌ SALAH] — [alasan]
+Parallel: [✅ VALID / ❌ TIDAK PARALEL]
+Slope: [✅ VALID / ❌ TIDAK KONSISTEN]
+CHANNEL SCORE:
+  Anchor Accuracy: [xx%]
+  Parallel Accuracy: [xx%]
+  Slope Accuracy: [xx%]
+  Overall Channel Score: [xx/100]
+KESIMPULAN: [✅ Channel VALID / ❌ Channel SALAH — alasan + saran perbaikan]
+Status: [VALID → lanjut] atau [SALAH → STOP TOTAL — H4/H1/M30/Retracement/BUY/SELL DIBLOKIR]
+────────────────────────
+ENGINE 4 — BIAS H4
+BIAS: [BULLISH / BEARISH / SIDEWAYS]
+Status: [VALID] atau [GAGAL] atau [BELUM DIPERIKSA — Channel GAGAL]
+────────────────────────
+ENGINE 5 — H1 VALIDATION
+[VALID] atau [SALAH — alasan] atau [BELUM DIPERIKSA — engine sebelumnya GAGAL]
+────────────────────────
+ENGINE 6 — M30 REFINEMENT
+[VALID] atau [SALAH — alasan] atau [BELUM DIPERIKSA]
+────────────────────────
+ENGINE 7 — SUPPLY & DEMAND
+Supply aktif: [daftar zona + timeframe + level]
+Demand aktif: [daftar zona + timeframe + level]
+Status: [VALID] atau [BELUM DIPERIKSA]
+────────────────────────
+ENGINE 7B — POI RANKING + MARKET ROUTE
+#1 [zona] · Level: [...] · ⭐⭐⭐⭐⭐ · [xx%] · Alasan: [...]
+#2 [zona] · Level: [...] · ⭐⭐⭐⭐ · [xx%] · Alasan: [...]
+#3 [zona] · Level: [...] · ⭐⭐⭐ · [xx%] · Alasan: [...]
+────────────────────────
+MARKET ROUTE:
+HARGA SAAT INI: [level]
+1. → [zona terdekat] — Prob [xx%]
+   ↓ Jika HOLD [xx%]: 2. → [level berikutnya] — Prob [xx%]
+   ↓ Jika BREAK [xx%]: 3. → [level berikutnya] — Prob [xx%]
+   ↓ Jika HOLD [xx%]: 4. → [skenario balik] — Prob [xx%]
+SKENARIO INVALIDASI: Jika [...] → target ke [...]
+CATATAN: Belum ada ENTRY.
+────────────────────────
+ENGINE 8 — SUPPORT & RESISTANCE
+Support: [level + status]
+Resistance: [level + status]
+────────────────────────
+ENGINE 9 — FIBONACCI RETRACEMENT
+Sumber Swing: [deskripsi — apakah dari Pivot valid 2-2?]
+Arah: [BUY/SELL]
+Level 0: [✓/✗]   Level 100: [✓/✗]   Golden Pocket: [✓/✗]
+Status: [VALID] atau [SALAH — alasan] atau [BELUM DIPERIKSA — Channel GAGAL]
+────────────────────────
+ENGINE 10 — M5 SETUP
+[VALID] atau [BELUM TERBENTUK — tunggu] atau [BELUM DIPERIKSA]
+────────────────────────
+ENGINE 11 — M1 TRIGGER
+[VALID] atau [BELUM ADA — tunggu] atau [BELUM DIPERIKSA]
+────────────────────────
+FINAL
+[BUY] atau [SELL] atau [WAIT]
+────────────────────────
+KESALAHAN DITEMUKAN
+1. ...   2. ...   (atau "Tidak ada")
+────────────────────────
 
-TIMEFRAME: ...  |  PAIR: ...  |  BROKER: ...
+GIP PRICE NARRATIVE (HANYA JIKA SEMUA ENGINE 1–11 VALID):
+════════════════════════
+HARGA SAAT INI: ...
+TREND: [Bullish/Bearish/Sideways]  |  PROBABILITY: ...%
+PERJALANAN HARGA:
+1. [Level terdekat] — [alasan: Demand/Supply/Fib/S&R] — Prob [xx%]
+   ↓ Jika HOLD:
+2. [Level berikutnya]
+   ↓ Jika BREAK:
+3. [Level berikutnya]
+   ↓ Jika BREAK:
+4. [Level terjauh]
+SKENARIO INVALIDASI: Jika [kondisi] → target berubah ke [level]
 ────────────────────────
-FIBONACCI CHANNEL
-[✅ VALID] atau [❌ SALAH]
-ALASAN: ...
-SARAN: ...
-────────────────────────
-FIBONACCI RETRACEMENT
-[✅ VALID] atau [❌ SALAH]
-ALASAN: ...
-SARAN: ...
-────────────────────────
-BIAS H4: [✅ BUY / ✅ SELL / ❌ SIDEWAYS / ❌ TIDAK TERDETEKSI]
-VALIDASI H1: [✅] atau [❌]
-STRUKTUR M30: [✅] atau [❌]
-SETUP M5: [✅] atau [❌]
-TRIGGER M1: [✅] atau [❌]
-────────────────────────
-FINAL DECISION: [BUY / SELL / WAIT / NO TRADE]
-CONFIDENCE: xx%
-────────────────────────
-KESALAHAN YANG DITEMUKAN:
-1. ...
-2. ...
-────────────────────────
-LANGKAH BERIKUTNYA: ...
-────────────────────────
+ENTRY: BELUM. Tunggu konfirmasi [jenis PA] di [area].
+SL: Di [atas/bawah] [level referensi].
+TP1: [level]  |  TP2: [level]  |  TP3: [level]
+════════════════════════
 
-GAYA JAWAB: Singkat. Langsung. Objektif. Tegas. Tidak ada teori panjang. Tidak ada tutorial.`;
+GIP CONFLUENCE SCORE (HANYA JIKA SEMUA ENGINE 1–11 VALID):
+════════════════════════
+Pivot Detection        [xx/100]
+Fresh Swing            [xx/100]
+Fibonacci Channel      [xx/100]
+Bias H4                [xx/100]
+H1 Confirmation        [xx/100]
+M30 Structure          [xx/100]
+Supply Zone            [xx/100]
+Demand Zone            [xx/100]
+Support / Resistance   [xx/100]
+Fib Retracement        [xx/100]
+M5 Setup               [xx/100]
+M1 Trigger             [xx/100]
+────────────────────────
+TOTAL SCORE: [xx/100]
+GRADE: A+(90–100) · A(80–89) · B+(70–79) · B(60–69) · C(50–59) · FAIL(<50)
+KEPUTUSAN AI BOLEH BUY/SELL: Hanya jika GRADE A atau A+. Di bawah itu → WAIT.
+════════════════════════
+
+ATURAN OUTPUT:
+• Jika ENGINE 3 (Channel) GAGAL → isi ENGINE 4–11 dengan [DIBLOKIR — Channel GAGAL]. FINAL: WAIT — Perbaiki Channel.
+• Jika engine lain GAGAL → isi engine berikutnya dengan [BELUM DIPERIKSA — engine sebelumnya GAGAL]. FINAL: WAIT.
+• Jika screenshot tidak cukup jelas → IMAGE QUALITY: FAIL. Berhenti.
+• DILARANG memberikan Entry/SL/TP tanpa semua engine 1–11 VALID.
+• Gaya: Singkat. Tegas. Objektif. Tanpa teori. Bahasa probabilistik.`;
 
 // ═══════════════════════════════════════════════════════════
 // PROVIDER REGISTRY — modular, extensible
@@ -710,7 +955,7 @@ const ConnectionTester = {
 };
 
 // ═══════════════════════════════════════════════════════════
-// CHAT ENGINE MODULE (core logic, UNCHANGED from v6)
+// CHAT ENGINE MODULE (core logic)
 // ═══════════════════════════════════════════════════════════
 const ChatEngine = {
   async toBase64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);}); },
@@ -975,53 +1220,145 @@ async function callProviderCouncil(provider, cfg, prompt, maxTokens=800){
 }
 
 // ── COUNCIL SYSTEM PROMPT ─────────────────────────────────
-const COUNCIL_MEMBER_PROMPT=`Kamu adalah anggota GIP FIBONACCI INSPECTOR AI Council — auditor chart trading independen.
+const COUNCIL_MEMBER_PROMPT=`Kamu adalah anggota GIP FIBONACCI INSPECTOR v19 AI Council — Trading Auditor independen.
 
-PERAN: AUDITOR INDEPENDEN. Bukan signal provider. Bukan guru. Audit apakah analisa BENAR atau SALAH.
+PERAN: AUDITOR QC. Bukan signal provider. Bukan advisor. Audit apakah analisa trader BENAR atau SALAH.
 
-━━━ SOP WAJIB — IDENTIK UNTUK SEMUA AI ━━━
-
-ABSOLUTE LAW #0 — VISUAL FIRST:
+━━━ ABSOLUTE LAW #0 — VISUAL FIRST ━━━
 Jika ada screenshot → BACA VISUAL DULU. Screenshot > Teks.
-Jika visual tidak lengkap → "DATA TIDAK CUKUP UNTUK VALIDASI."
+Jika visual tidak lengkap / buram / terpotong → jawab: "Screenshot tidak cukup jelas untuk divalidasi." Berhenti.
 
-ABSOLUTE LAW #1: Fibonacci Channel salah → BERHENTI. Tidak ada analisa lanjutan.
-ABSOLUTE LAW #2: Fibonacci Retracement salah → BATALKAN semua entry.
-ABSOLUTE LAW #3: DILARANG BUY/SELL/ENTRY sebelum Fib Channel dan Fib Retracement VALID.
-ABSOLUTE LAW #4: DILARANG MENEBAK. Jika tidak bisa dipastikan → WAIT.
+━━━ ABSOLUTE LAW #1 — URUTAN WAJIB (ENGINE 0–12) ━━━
+ENGINE 0: Image Quality → ENGINE 1: Pivot Detection (2-2 Rule) → ENGINE 2: Fresh Swing → ENGINE 3: Fibonacci Channel Inspection → ENGINE 4: Bias H4 → ENGINE 5: H1 Validation → ENGINE 6: M30 Refinement → ENGINE 7: Supply & Demand → ENGINE 7B: POI Ranking + Market Route → ENGINE 8: Support & Resistance → ENGINE 9: Fibonacci Retracement → ENGINE 10: M5 Setup → ENGINE 11: M1 Trigger → ENGINE 12: Price Narrative
+Satu engine GAGAL → BERHENTI. Jangan lanjut.
 
-AUDIT FLOW (WAJIB URUTAN):
-STEP 0: IMAGE QUALITY CHECK — jika gambar tidak layak → STOP, sebutkan alasan, jangan analisa.
-STEP 1: Deteksi Timeframe, Pair, Broker dari visual
-STEP 2: Identifikasi Swing High & Swing Low (2-bar pivot rule)
-STEP 3: Tentukan Fresh Swing — OBJEKTIF, bukan opini. Jika >1 kandidat → daftar semua, jelaskan pilihan.
-STEP 4: VALIDASI Fibonacci Channel
-STEP 5: VALIDASI Fibonacci Retracement
-STEP 6: Bias H4 (BUY=HH+HL | SELL=LH+LL | SIDEWAYS=NO TRADE)
-STEP 7: Validasi H1
-STEP 8: Struktur M30
-STEP 9: Setup M5
-STEP 10: Trigger M1
-→ Putuskan: BUY / SELL / WAIT / NO TRADE
+━━━ ABSOLUTE LAW #2 — FIBONACCI CHANNEL INSPECTOR GATE ━━━
+Jika ENGINE 3 (Fibonacci Channel) INVALID atau SALAH:
+• ❌ ENGINE 4 (H4) DIBLOKIR
+• ❌ ENGINE 5 (H1) DIBLOKIR
+• ❌ ENGINE 6 (M30) DIBLOKIR
+• ❌ ENGINE 9 (Fib Retracement) DIBLOKIR
+• ❌ TIDAK BOLEH ada BUY / SELL / Entry / SL / TP
+• FINAL WAJIB: WAIT — Perbaiki Channel terlebih dahulu.
 
-FRESH SWING: Hanya swing terbaru yang masih mengendalikan harga.
-BUY Retracement: Swing Low → Swing High
-SELL Retracement: Swing High → Swing Low
-Golden Pocket: 61.8% – 70.5%
+━━━ ABSOLUTE LAW #3 — DILARANG ENTRY SEBELUM SEMUA VALID ━━━
+DILARANG BUY/SELL/Entry/SL/TP sebelum Engine 1–11 semua VALID. Satu gagal → FINAL: WAIT.
+
+━━━ ABSOLUTE LAW #4 — DILARANG MENEBAK ━━━
+Tidak pasti dari visual → DATA TIDAK CUKUP UNTUK VALIDASI.
+
+ENGINE 0 — IMAGE QUALITY:
+WAJIB pertama. Jika buram/terpotong/resolusi rendah/Fib tidak terlihat → STOP TOTAL. Sebutkan alasan.
+
+ENGINE 1 — PIVOT DETECTION:
+Deteksi seluruh Pivot High dan Pivot Low dari visual.
+Pivot VALID hanya jika memenuhi 2-2 Rule: High/Low pivot harus lebih tinggi/rendah dari minimal 2 candle di kiri DAN 2 candle di kanan, dan 2 candle kanan sudah CLOSE.
+Daftarkan semua pivot. Tandai valid/belum valid. Jika tidak ada pivot valid → STOP.
+
+ENGINE 2 — FRESH SWING:
+Dari pivot valid, tentukan Fresh Swing yang masih mengontrol market.
+Fresh = belum pernah ditembus setelah terbentuk. Ditembus = EXPIRED, tolak.
+Jika tidak ada Fresh Swing → STOP.
+
+ENGINE 3 — FIBONACCI CHANNEL INSPECTION:
+Channel WAJIB dari Fresh Swing (Engine 2). Jika pivot sumber salah → channel otomatis INVALID.
+BUY Channel: 2 Fresh Swing Low + paralel ke atas. SELL Channel: 2 Fresh Swing High + paralel ke bawah.
+Slope harus konsisten dengan tren. Paralel harus benar-benar paralel.
+Channel INVALID jika harga close >50% body di luar.
+
+WAJIB output CHANNEL INSPECTION:
+Anchor 1: [✅ VALID / ❌ SALAH] — alasan + seharusnya memakai Pivot mana
+Anchor 2: [✅ VALID / ❌ SALAH] — alasan + seharusnya memakai Pivot mana
+Parallel: [✅ VALID / ❌ TIDAK PARALEL]
+Slope: [✅ VALID / ❌ TIDAK KONSISTEN]
+KESIMPULAN: [✅ Channel VALID] atau [❌ Channel SALAH — Silakan tarik ulang. H4/H1/M30/Retracement/BUY/SELL DIBLOKIR]
+
+ENGINE 4 — BIAS H4:
+Channel slope positif → BULLISH. Slope negatif → BEARISH. Flat/di luar → SIDEWAYS → WAIT → STOP.
+DIBLOKIR jika Channel GAGAL.
+
+ENGINE 5 — H1 VALIDATION:
+H1 harus konsisten dengan Bias H4. Berlawanan → STOP.
+DIBLOKIR jika Channel GAGAL.
+
+ENGINE 6 — M30 REFINEMENT:
+Struktur M30 harus searah H4 dan H1. Validasi ulang Fresh Swing jika perlu (2-2 Rule tetap berlaku).
+DIBLOKIR jika Channel GAGAL.
+
+ENGINE 7 — SUPPLY & DEMAND:
+Daftarkan SEMUA zona Supply dan Demand yang masih aktif (belum ditembus, belum dimitigasi). Catat timeframe asal (H4/H1/M30). Sudah dimitigasi/ditembus → EXPIRED.
+
+ENGINE 7B — POI RANKING + MARKET ROUTE:
+Ranking seluruh zona aktif berdasarkan kekuatan: Timeframe asal (H4>H1>M30) + fresh/belum diuji + konfluensi Fib/S&R + jarak ke harga saat ini.
+Format: #1 [zona H4] ⭐⭐⭐⭐⭐ [xx%] → #2 [zona H1] ⭐⭐⭐⭐ [xx%] → #3 [zona M30] ⭐⭐⭐ [xx%]
+
+MARKET ROUTE (WAJIB setelah POI Ranking):
+HARGA SAAT INI: [level]
+1. → [zona terdekat] — Prob [xx%]
+   ↓ Jika HOLD: 2. → [level berikutnya]
+   ↓ Jika BREAK: 3. → [level berikutnya]
+   ↓ Jika Hold level 3: 4. → [skenario balik]
+SKENARIO INVALIDASI: Jika [...] → rute berubah ke [...]
+CATATAN: Belum ada ENTRY.
+
+ENGINE 8 — SUPPORT & RESISTANCE:
+Level Support dan Resistance masih valid? Periksa role reversal.
+
+ENGINE 9 — FIBONACCI RETRACEMENT:
+Retracement WAJIB dari Fresh Swing hasil Engine 2 (Pivot 2-2 Rule).
+BUY: Swing Low → Swing High (0 bawah, 100 atas). SELL: Swing High → Swing Low (0 atas, 100 bawah).
+Cek: arah, level 0, level 100, Golden Pocket (61.8–70.5%), 161.8. Salah → STOP.
+DIBLOKIR jika Channel GAGAL.
+
+ENGINE 10 — M5 SETUP:
+Setup terbentuk? Belum entry — validasi saja. Belum terbentuk → WAIT.
+
+ENGINE 11 — M1 TRIGGER:
+Trigger entry ada? (pin bar, engulfing, rejection, konfirmasi). Belum ada → WAIT.
 
 FORMAT OUTPUT WAJIB:
-IMAGE QUALITY: [✅ LAYAK / 🛑 STOP — alasan jika tidak layak]
-VISUAL CONFIDENCE: [xx% — alasan singkat]
-FRESH SWING: [Swing yang dipilih + alasan objektif]
-VERDICT: [BUY/SELL/WAIT/NO TRADE]
-CONFIDENCE: [xx%]
-FIB CHANNEL: [✅ VALID / ❌ SALAH — alasan + konstruksi yang benar jika salah]
-FIB RETRACEMENT: [✅ VALID / ❌ SALAH — alasan]
-BIAS H4: [BUY/SELL/SIDEWAYS]
-KESALAHAN: [list kesalahan atau "Tidak ada"]
-ALASAN FINAL: [2-3 kalimat tegas berdasarkan validasi Fibonacci]
+IMAGE QUALITY: [PASS] atau [FAIL — alasan]
+PAIR: ...  TIMEFRAME: ...
+ENGINE 1 — PIVOT: [VALID — daftar pivot + skor terkuat xx/100] atau [GAGAL — alasan]
+ENGINE 2 — FRESH SWING: [VALID — High: ... Conf xx% · Low: ... Conf xx%] atau [GAGAL]
+ENGINE 3 — CHANNEL INSPECTION:
+  Anchor 1: [✅/❌] Anchor 2: [✅/❌] Parallel: [✅/❌] Slope: [✅/❌]
+  CHANNEL SCORE: Anchor [xx%] · Parallel [xx%] · Slope [xx%] · Overall [xx/100]
+  KESIMPULAN: [✅ VALID / ❌ SALAH — alasan + saran perbaikan]
+ENGINE 4 — BIAS H4: [BULLISH / BEARISH / SIDEWAYS] atau [DIBLOKIR — Channel GAGAL]
+ENGINE 5 — H1: [VALID] atau [SALAH] atau [DIBLOKIR — Channel GAGAL] atau [BELUM DIPERIKSA]
+ENGINE 6 — M30: [VALID] atau [SALAH] atau [DIBLOKIR — Channel GAGAL] atau [BELUM DIPERIKSA]
+ENGINE 7 — SUPPLY/DEMAND: Supply aktif:[...] Demand aktif:[...] atau [BELUM DIPERIKSA]
+ENGINE 7B — POI RANKING: #1[zona·⭐·%] #2[zona·⭐·%] #3[zona·⭐·%] atau [BELUM DIPERIKSA]
+MARKET ROUTE: HARGA SAAT INI:[...] 1→[...] ↓HOLD→2→[...] ↓BREAK→3→[...] atau [BELUM DIPERIKSA]
+ENGINE 8 — S&R: Support:[...] Resistance:[...] atau [BELUM DIPERIKSA]
+ENGINE 9 — FIB RETRACEMENT: [VALID] atau [SALAH] atau [DIBLOKIR — Channel GAGAL] atau [BELUM DIPERIKSA]
+ENGINE 10 — M5: [VALID] atau [BELUM TERBENTUK] atau [BELUM DIPERIKSA]
+ENGINE 11 — M1: [VALID] atau [BELUM ADA] atau [BELUM DIPERIKSA]
+VERDICT: [BUY/SELL/WAIT]
+KESALAHAN: [list atau "Tidak ada"]
 
-Rules: Jawab sekali. Maksimum 400 kata. Bahasa Indonesia. Tegas. Objektif.`;
+GIP PRICE NARRATIVE (HANYA JIKA ENGINE 1–11 SEMUA VALID):
+HARGA SAAT INI: ...
+TREND: [Bullish/Bearish/Sideways]  |  PROBABILITY: ...%
+PERJALANAN HARGA:
+1. [Level 1] — [alasan] — Prob [xx%]
+   ↓ Jika HOLD:
+2. [Level 2]
+   ↓ Jika BREAK:
+3. [Level 3]
+   ↓ Jika BREAK:
+4. [Level 4]
+SKENARIO INVALIDASI: Jika [...] → target ke [level]
+ENTRY: BELUM. Tunggu [jenis PA] di [area].
+SL: Di [atas/bawah] [level].
+TP1: [level]  |  TP2: [level]  |  TP3: [level]
+
+GIP CONFLUENCE SCORE (HANYA JIKA ENGINE 1–11 SEMUA VALID):
+Pivot [xx/100] · Fresh Swing [xx/100] · Channel [xx/100] · H4 [xx/100] · H1 [xx/100] · M30 [xx/100] · Supply [xx/100] · Demand [xx/100] · S&R [xx/100] · Fib Ret [xx/100] · M5 [xx/100] · M1 [xx/100]
+TOTAL: [xx/100] — GRADE: [A+/A/B+/B/C/FAIL]
+
+Rules: Jawab sekali. Maksimum 700 kata. Bahasa Indonesia. Tegas. Objektif. Tanpa teori.`;
 
 // ═══════════════════════════════════════════════════════════
 // COUNCIL SYSTEM PROMPT (was missing — bug fix)
@@ -1076,14 +1413,15 @@ const SynthesisEngine = {
     const valid=Object.entries(responses).filter(([,r])=>r&&!r.error&&!r.timedOut);
     const lines=valid.map(([pid,r])=>{
       const t=r.text||"";
-      const fibCh=(t.match(/FIB CHANNEL[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
-      const fibRe=(t.match(/FIB RETRACEMENT[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
-      const biasH4=(t.match(/BIAS H4[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
+      const pivot=(t.match(/ENGINE 1[^:\n]*[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
+      const channel=(t.match(/ENGINE 3[^:\n]*[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
+      const bias=(t.match(/ENGINE 4[^:\n]*[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
+      const fibRe=(t.match(/ENGINE 9[^:\n]*[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
       const errors=(t.match(/KESALAHAN[:\s]+([^\n]+)/i)||[])[1]||"tidak terdeteksi";
-      return `• ${r.providerName||pid} [${r.verdict}, ${r.confidence}%]\n  FIB CHANNEL: ${fibCh}\n  FIB RETRACEMENT: ${fibRe}\n  BIAS H4: ${biasH4}\n  KESALAHAN: ${errors}`;
+      return `• ${r.providerName||pid} [${r.verdict}, ${r.confidence}%]\n  PIVOT: ${pivot}\n  CHANNEL: ${channel}\n  BIAS H4: ${bias}\n  FIB RETRACEMENT: ${fibRe}\n  KESALAHAN: ${errors}`;
     }).join("\n\n");
     const voteStr=Object.entries(tallies).filter(([,n])=>n>0).map(([v,n])=>`${v}:${n}`).join(" | ");
-    return `Kamu adalah Chief Synthesis Officer GIP FIBONACCI INSPECTOR AI Council.
+    return `Kamu adalah Chief Synthesis Officer GIP FIBONACCI INSPECTOR v19 AI Council.
 
 PERTANYAAN USER: "${originalPrompt}"
 
@@ -1092,22 +1430,71 @@ ${lines}
 
 VOTING: ${voteStr}
 
-Tugas: Buat LAPORAN AUDIT FINAL berdasarkan SOP GIP Fibonacci Inspector. Semua AI menggunakan SOP identik.
+Tugas: Buat LAPORAN AUDIT FINAL berdasarkan SOP GIP v19. Urutan wajib ENGINE 0–12.
+PENTING: Jika ENGINE 3 (Channel) GAGAL → ENGINE 4/5/6/9 harus ditandai DIBLOKIR. Tidak boleh ada BUY/SELL.
+Jika semua Engine 1–11 valid, wajib sertakan GIP Price Narrative DAN Market Route.
 
 FORMAT WAJIB:
-KESIMPULAN: [BUY/SELL/WAIT/NO TRADE]
+ENGINE 1 (PIVOT) KONSENSUS: [VALID / GAGAL — ringkasan]
+ENGINE 2 (FRESH SWING) KONSENSUS: [VALID / GAGAL]
+ENGINE 3 (CHANNEL INSPECTION) KONSENSUS:
+  Anchor 1: [✅/❌] Anchor 2: [✅/❌] Parallel: [✅/❌] Slope: [✅/❌]
+  KESIMPULAN: [✅ VALID / ❌ SALAH — alasan + saran]
+ENGINE 4 (BIAS H4) KONSENSUS: [BULLISH / BEARISH / SIDEWAYS] atau [DIBLOKIR — Channel GAGAL]
+ENGINE 5 (H1) KONSENSUS: [VALID / SALAH / DIBLOKIR / BELUM DIPERIKSA]
+ENGINE 6 (M30) KONSENSUS: [VALID / SALAH / DIBLOKIR / BELUM DIPERIKSA]
+ENGINE 7 (SUPPLY/DEMAND) KONSENSUS: [VALID / SALAH / BELUM DIPERIKSA]
+ENGINE 7B (POI RANKING) KONSENSUS: #1[zona·⭐·%] #2[zona·⭐·%] atau [BELUM DIPERIKSA]
+MARKET ROUTE KONSENSUS: HARGA:[...] 1→[...] ↓HOLD→2→[...] ↓BREAK→3→[...] atau [BELUM DIPERIKSA]
+ENGINE 8 (S&R) KONSENSUS: [VALID / SALAH / BELUM DIPERIKSA]
+ENGINE 9 (FIB RETRACEMENT) KONSENSUS: [VALID / SALAH / DIBLOKIR / BELUM DIPERIKSA]
+ENGINE 10 (M5) KONSENSUS: [VALID / BELUM TERBENTUK / BELUM DIPERIKSA]
+ENGINE 11 (M1) KONSENSUS: [VALID / BELUM ADA / BELUM DIPERIKSA]
+KESIMPULAN: [BUY/SELL/WAIT]
 KEYAKINAN: [xx%]
-FIB CHANNEL KONSENSUS: [\u2705 VALID / \u274c SALAH \u2014 ringkasan alasan]
-FIB RETRACEMENT KONSENSUS: [\u2705 VALID / \u274c SALAH \u2014 ringkasan alasan]
 ALASAN MAYORITAS:
-\u2022 [alasan 1]
-\u2022 [alasan 2]
-\u2022 [alasan 3 jika ada]
-PENDAPAT MINORITAS: [siapa dan mengapa berbeda, atau "Bulat" jika semua setuju]
-RISIKO TERBESAR: [1-2 faktor konkret]
-LANGKAH BERIKUTNYA: [1 kalimat actionable]
+• [alasan 1]
+• [alasan 2]
+• [alasan 3 jika ada]
+PENDAPAT MINORITAS: [siapa dan mengapa berbeda, atau "Bulat"]
+KESALAHAN DITEMUKAN: [list atau "Tidak ada"]
 
-Bahasa Indonesia. Tegas. Objektif. Maksimum 300 kata.`;
+GIP CONFLUENCE SCORE (HANYA JIKA ENGINE 1–11 SEMUA VALID):
+════════════════════════
+Pivot Detection        [xx/100]
+Fresh Swing            [xx/100]
+Fibonacci Channel      [xx/100]
+Bias H4                [xx/100]
+H1 Confirmation        [xx/100]
+M30 Structure          [xx/100]
+Supply Zone            [xx/100]
+Demand Zone            [xx/100]
+Support / Resistance   [xx/100]
+Fib Retracement        [xx/100]
+M5 Setup               [xx/100]
+M1 Trigger             [xx/100]
+────────────────────────
+TOTAL SCORE: [xx/100]
+GRADE: A+(90–100) · A(80–89) · B+(70–79) · B(60–69) · C(50–59) · FAIL(<50)
+════════════════════════
+
+GIP PRICE NARRATIVE KONSENSUS (HANYA JIKA ENGINE 1–11 SEMUA VALID):
+HARGA SAAT INI: ...
+TREND: [Bullish/Bearish/Sideways]  |  PROBABILITY: ...%
+PERJALANAN HARGA:
+1. [Level 1 terdekat — alasan: Demand/Supply/Fib/S&R] — Prob [xx%]
+   ↓ Jika HOLD:
+2. [Level 2]
+   ↓ Jika BREAK:
+3. [Level 3]
+   ↓ Jika BREAK:
+4. [Level 4]
+SKENARIO INVALIDASI: Jika [...] → target ke [level]
+ENTRY: BELUM. Tunggu [jenis PA] di [area].
+SL: Di [atas/bawah] [level].
+TP1: [level]  |  TP2: [level]  |  TP3: [level]
+
+Bahasa Indonesia. Tegas. Objektif. Maksimum 500 kata.`;
   },
 };
 // ── REPORT PARSER — parse synthesis output into structured data ──
@@ -1122,7 +1509,11 @@ const ReportParser = {
       const rx=new RegExp(`${label}[:\\s]*\\n([\\s\\S]*?)(?=\\n[A-Z\\u00C0-\\u017E]{3,}:|$)`,"i");
       const m=text.match(rx);
       if(!m) return [];
-      return m[1].split("\n").map(l=>l.replace(/^[•\-*]\s*/,"").trim()).filter(Boolean).slice(0,4);
+      return m[1].split("\n").map(l=>l.replace(/^[•\-*\\d\\.\\)]\s*/,"").trim()).filter(Boolean).slice(0,5);
+    };
+    const getNum=(label)=>{
+      const rx=new RegExp(`${label}[:\\s]+([\\d]+)`,"i");
+      const m=text.match(rx); return m?parseInt(m[1]):null;
     };
     const kesimpulan=(get("KESIMPULAN")||fallbackConsensus||"WAIT").toUpperCase().replace(/[^A-Z]/g,"");
     const verdict=["BUY","SELL","WAIT"].includes(kesimpulan)?kesimpulan:"WAIT";
@@ -1132,9 +1523,75 @@ const ReportParser = {
     const alasanText=get("ALASAN MAYORITAS");
     const alasan=alasanBullets.length?alasanBullets:alasanText?[alasanText]:[];
     const minoritas=get("PENDAPAT MINORITAS")||get("MINORITAS")||"";
-    const risiko=get("RISIKO TERBESAR")||get("RISIKO")||"";
-    const saran=get("SARAN")||"";
-    return {verdict,confidence:conf,alasan,minoritas,risiko,saran};
+    const risiko=get("KESALAHAN DITEMUKAN")||get("RISIKO TERBESAR")||get("RISIKO")||"";
+    const saran=get("SARAN")||get("LANGKAH BERIKUTNYA")||"";
+    // Price Narrative fields
+    const hargaSkrg=get("HARGA SAAT INI")||"";
+    const trend=get("TREND")||"";
+    const probability=get("PROBABILITY")||"";
+    const perjalananBullets=getBullets("PERJALANAN HARGA");
+    const tree=get("TREE")||"";
+    const skenarioGagal=get("SKENARIO GAGAL")||"";
+    const entry=get("ENTRY")||"";
+    const sl=get("SL")||"";
+    const tp1=get("TP1")||"";
+    const tp2=get("TP2")||"";
+    const tp3=get("TP3")||"";
+    const hasPriceNarrative=!!(hargaSkrg||trend||perjalananBullets.length);
+
+    // ── CONFLUENCE SCORE PARSING ─────────────────────────────
+    const parseScore=(label)=>{
+      const rx=new RegExp(`${label}[\\s\\S]{0,10}?\\[(\\d+)[/\\\\]100\\]`,"i");
+      const m=text.match(rx);
+      if(m) return parseInt(m[1]);
+      const rx2=new RegExp(`${label}[^\\n]*?(\\d{2,3})\\s*[/\\\\]\\s*100`,"i");
+      const m2=text.match(rx2);
+      return m2?parseInt(m2[1]):null;
+    };
+    const totalScoreStr=get("TOTAL SCORE")||get("TOTAL")||"";
+    const totalScore=parseInt(totalScoreStr.match(/\d+/)?.[0])||null;
+    const gradeStr=get("GRADE")||"";
+    const gradeMatch=gradeStr.match(/\b(A\+|A|B\+|B|C|FAIL)\b/i);
+    const grade=gradeMatch?gradeMatch[1].toUpperCase():null;
+
+    const confluenceScores={
+      pivot:       parseScore("Pivot Detection")||parseScore("PIVOT"),
+      freshSwing:  parseScore("Fresh Swing")||parseScore("FRESH SWING"),
+      channel:     parseScore("Fibonacci Channel")||parseScore("CHANNEL"),
+      biasH4:      parseScore("Bias H4")||parseScore("H4"),
+      h1:          parseScore("H1 Confirmation")||parseScore("H1"),
+      m30:         parseScore("M30 Structure")||parseScore("M30"),
+      supply:      parseScore("Supply Zone")||parseScore("Supply"),
+      demand:      parseScore("Demand Zone")||parseScore("Demand"),
+      snr:         parseScore("Support.*Resistance")||parseScore("S&R"),
+      fibRet:      parseScore("Fib Retracement")||parseScore("Retracement"),
+      m5:          parseScore("M5 Setup")||parseScore("M5"),
+      m1:          parseScore("M1 Trigger")||parseScore("M1"),
+    };
+    const hasConfluence=totalScore!==null||Object.values(confluenceScores).some(v=>v!==null);
+
+    // ── CHANNEL SCORE PARSING ────────────────────────────────
+    const anchorAcc=parseInt((text.match(/Anchor Accuracy[:\s]+(\d+)/i)||[])[1])||null;
+    const parallelAcc=parseInt((text.match(/Parallel Accuracy[:\s]+(\d+)/i)||[])[1])||null;
+    const slopeAcc=parseInt((text.match(/Slope Accuracy[:\s]+(\d+)/i)||[])[1])||null;
+    const channelOverall=parseInt((text.match(/Overall Channel[^:]*:[:\s]+(\d+)/i)||[])[1])||null;
+    const hasChannelScore=!!(anchorAcc||parallelAcc||slopeAcc||channelOverall);
+
+    // ── PIVOT SCORE PARSING ──────────────────────────────────
+    const pivotScoreMatch=text.match(/PIVOT SCORE TERKUAT[:\s]+([^\n]+)/i);
+    const pivotScoreStr=pivotScoreMatch?pivotScoreMatch[1].trim():"";
+
+    // ── FRESH SWING CONFIDENCE ───────────────────────────────
+    const swingConfMatches=[...text.matchAll(/Fresh Swing #\d+[^\n]*Confidence[:\s]+(\d+)%/gi)];
+    const swingConfidences=swingConfMatches.map(m=>parseInt(m[1])).filter(n=>!isNaN(n));
+
+    return {verdict,confidence:conf,alasan,minoritas,risiko,saran,
+      priceNarrative:hasPriceNarrative?{hargaSkrg,trend,probability,perjalanan:perjalananBullets,tree,skenarioGagal,entry,sl,tp1,tp2,tp3}:null,
+      confluenceScore:hasConfluence?{scores:confluenceScores,total:totalScore,grade}:null,
+      channelScore:hasChannelScore?{anchorAcc,parallelAcc,slopeAcc,overall:channelOverall}:null,
+      pivotScoreStr,
+      swingConfidences,
+    };
   }
 };
 
@@ -1157,12 +1614,12 @@ function pColorRgb(pid, allProviders){
   return allProviders.find(p=>p.id===pid)?.colorRgb || "59,130,246";
 }
 const QUICK_PROMPTS=[
-  "Cek apakah Fibonacci Channel saya sudah benar berdasarkan fresh swing.",
-  "Validasi Fibonacci Retracement saya — apakah titik 0 dan 100 sudah tepat?",
-  "Golden Pocket 61.8–70.5 sudah kena, apakah entry valid?",
-  "Saya ragu swing mana yang harus jadi titik awal Fibonacci Channel.",
-  "Screenshot sudah saya upload — audit apakah analisa Fibonacci saya BENAR atau SALAH.",
-  "Apakah ini fresh swing atau swing lama? Tolong audit.",
+  "Upload screenshot H4 — audit apakah Fibonacci Channel saya sudah benar.",
+  "Validasi H4 → H1 → M30 dari chart yang saya upload.",
+  "Cek zona Supply Demand dan Fibonacci Retracement saya — sudah valid?",
+  "Apakah setup M5 sudah terbentuk dan layak entry?",
+  "Screenshot sudah diupload — audit seluruh langkah H4 sampai M1.",
+  "Apakah ini fresh swing yang benar untuk titik Fibonacci Retracement?",
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -2049,13 +2506,121 @@ function SeatCard({provider, response, memory, loading, role}){
   </div>;
 }
 
+// ── ConfluenceScorePanel ──────────────────────────────────
+function ConfluenceScorePanel({confluenceScore, channelScore, pivotScoreStr, swingConfidences}){
+  if(!confluenceScore && !channelScore && !pivotScoreStr && (!swingConfidences||!swingConfidences.length)) return null;
+
+  const gradeColor=(g)=>{
+    if(!g) return "var(--t3)";
+    if(g==="A+") return "#10b981";
+    if(g==="A")  return "#34d399";
+    if(g==="B+") return "#60a5fa";
+    if(g==="B")  return "#93c5fd";
+    if(g==="C")  return "#f59e0b";
+    return "#ef4444";
+  };
+  const scoreColor=(s)=>{
+    if(s===null||s===undefined) return "var(--t4)";
+    if(s>=90) return "#10b981";
+    if(s>=80) return "#34d399";
+    if(s>=70) return "#60a5fa";
+    if(s>=60) return "#f59e0b";
+    if(s>=50) return "#fb923c";
+    return "#ef4444";
+  };
+
+  const SCORE_LABELS=[
+    {key:"pivot",      label:"Pivot Detection"},
+    {key:"freshSwing", label:"Fresh Swing"},
+    {key:"channel",    label:"Fib Channel"},
+    {key:"biasH4",     label:"Bias H4"},
+    {key:"h1",         label:"H1 Confirm"},
+    {key:"m30",        label:"M30 Structure"},
+    {key:"supply",     label:"Supply Zone"},
+    {key:"demand",     label:"Demand Zone"},
+    {key:"snr",        label:"S&R"},
+    {key:"fibRet",     label:"Fib Retracement"},
+    {key:"m5",         label:"M5 Setup"},
+    {key:"m1",         label:"M1 Trigger"},
+  ];
+
+  const total=confluenceScore?.total;
+  const grade=confluenceScore?.grade;
+  const scores=confluenceScore?.scores||{};
+
+  return <div style={{background:"var(--s2)",border:"1px solid rgba(139,92,246,.25)",borderRadius:"var(--r16)",overflow:"hidden",marginTop:2}}>
+    <div style={{padding:"10px 16px",borderBottom:"1px solid rgba(139,92,246,.15)",background:"rgba(139,92,246,.07)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <span style={{fontSize:10,fontFamily:"var(--mono)",fontWeight:700,letterSpacing:".08em",color:"#a78bfa"}}>GIP CONFLUENCE ENGINE</span>
+      {total!==null&&total!==undefined&&<div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:22,fontWeight:800,fontFamily:"var(--mono)",color:scoreColor(total)}}>{total}/100</span>
+        {grade&&<div style={{padding:"2px 10px",borderRadius:99,background:`${gradeColor(grade)}18`,border:`1px solid ${gradeColor(grade)}44`,fontSize:13,fontWeight:800,fontFamily:"var(--mono)",color:gradeColor(grade)}}>{grade}</div>}
+      </div>}
+    </div>
+
+    <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
+      {/* Confluence score bars */}
+      {confluenceScore && <div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 12px"}}>
+          {SCORE_LABELS.map(({key,label})=>{
+            const s=scores[key];
+            if(s===null||s===undefined) return null;
+            return <div key={key} style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:9.5,color:"var(--t3)",fontFamily:"var(--mono)",width:96,flexShrink:0,whiteSpace:"nowrap"}}>{label}</span>
+              <div style={{flex:1,height:4,background:"var(--border)",borderRadius:99,overflow:"hidden",minWidth:30}}>
+                <div style={{height:"100%",borderRadius:99,width:`${s}%`,background:scoreColor(s),transition:"width .6s var(--ease)"}}/>
+              </div>
+              <span style={{fontSize:9.5,fontFamily:"var(--mono)",fontWeight:700,color:scoreColor(s),width:32,textAlign:"right",flexShrink:0}}>{s}</span>
+            </div>;
+          })}
+        </div>
+      </div>}
+
+      {/* Channel Score breakdown */}
+      {channelScore && <div style={{background:"var(--s3)",border:"1px solid var(--border-s)",borderRadius:"var(--r8)",padding:"8px 12px"}}>
+        <div style={{fontSize:9,fontFamily:"var(--mono)",color:"#a78bfa",letterSpacing:".06em",marginBottom:7,fontWeight:700}}>CHANNEL SCORE BREAKDOWN</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {[
+            {label:"Anchor",val:channelScore.anchorAcc},
+            {label:"Parallel",val:channelScore.parallelAcc},
+            {label:"Slope",val:channelScore.slopeAcc},
+            {label:"Overall",val:channelScore.overall},
+          ].map(({label,val})=>val!==null&&val!==undefined?
+            <div key={label} style={{textAlign:"center",background:"var(--s2)",border:`1px solid ${scoreColor(val)}33`,borderRadius:"var(--r8)",padding:"5px 10px",minWidth:60}}>
+              <div style={{fontSize:14,fontWeight:800,fontFamily:"var(--mono)",color:scoreColor(val)}}>{val}%</div>
+              <div style={{fontSize:8,color:"var(--t4)",fontFamily:"var(--mono)",letterSpacing:".05em",marginTop:1}}>{label}</div>
+            </div>:null
+          )}
+        </div>
+      </div>}
+
+      {/* Pivot Score */}
+      {pivotScoreStr && <div style={{background:"var(--s3)",border:"1px solid var(--border-s)",borderRadius:"var(--r8)",padding:"8px 12px"}}>
+        <div style={{fontSize:9,fontFamily:"var(--mono)",color:"#60a5fa",letterSpacing:".06em",marginBottom:4,fontWeight:700}}>PIVOT STRENGTH</div>
+        <div style={{fontSize:11.5,color:"var(--t2)",lineHeight:1.5,fontFamily:"var(--mono)"}}>{pivotScoreStr}</div>
+      </div>}
+
+      {/* Fresh Swing Confidence */}
+      {swingConfidences&&swingConfidences.length>0 && <div style={{background:"var(--s3)",border:"1px solid var(--border-s)",borderRadius:"var(--r8)",padding:"8px 12px"}}>
+        <div style={{fontSize:9,fontFamily:"var(--mono)",color:"#34d399",letterSpacing:".06em",marginBottom:6,fontWeight:700}}>FRESH SWING CONFIDENCE</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {swingConfidences.map((c,i)=><div key={i} style={{textAlign:"center",background:"var(--s2)",border:`1px solid ${scoreColor(c)}33`,borderRadius:"var(--r8)",padding:"5px 12px"}}>
+            <div style={{fontSize:15,fontWeight:800,fontFamily:"var(--mono)",color:scoreColor(c)}}>{c}%</div>
+            <div style={{fontSize:8,color:"var(--t4)",fontFamily:"var(--mono)",marginTop:1}}>Swing #{i+1}</div>
+          </div>)}
+        </div>
+      </div>}
+    </div>
+  </div>;
+}
+
 // ── CouncilVerdict (was missing) ──────────────────────────
 function CouncilVerdict({result, allProviders}){
   if(!result) return null;
-  const {consensus, confidence, tallies, riskData, debateSummary, finalDecision, responses, participantCount, timestamp} = result;
+  const {consensus, confidence, tallies, riskData, debateSummary, finalDecision, responses, participantCount, timestamp, priceNarrative, confluenceScore, channelScore, pivotScoreStr, swingConfidences} = result;
   const vColor = VerdictDetector.color(consensus);
   const vRgb = VerdictDetector.rgb(consensus);
   const rColor = riskData?.level==="HIGH"?"#ef4444":riskData?.level==="MEDIUM"?"#f59e0b":"#10b981";
+  const trendColor = priceNarrative?.trend?.toLowerCase().includes("bullish")?"#10b981":priceNarrative?.trend?.toLowerCase().includes("bearish")?"#ef4444":"#f59e0b";
   return <div style={{display:"flex",flexDirection:"column",gap:10,animation:"fadeUp .3s var(--ease)"}}>
     {/* Verdict banner */}
     <div style={{background:"var(--s2)",border:`1px solid rgba(${vRgb},.3)`,borderRadius:"var(--r20)",padding:"20px 22px",position:"relative",overflow:"hidden"}}>
@@ -2095,11 +2660,79 @@ function CouncilVerdict({result, allProviders}){
         </div>
       </div>
     </div>
+    {/* GIP Price Narrative */}
+    {priceNarrative && <div style={{background:"var(--s2)",border:"1px solid rgba(16,185,129,.25)",borderRadius:"var(--r16)",overflow:"hidden"}}>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid rgba(16,185,129,.15)",background:"rgba(16,185,129,.06)",display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:10,fontFamily:"var(--mono)",fontWeight:700,letterSpacing:".08em",color:"#34d399"}}>GIP PRICE NARRATIVE ENGINE</span>
+      </div>
+      <div style={{padding:"14px 16px",display:"flex",flexDirection:"column",gap:10}}>
+        {/* Harga + Trend */}
+        <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          {priceNarrative.hargaSkrg && <div style={{background:"var(--s3)",border:"1px solid var(--border)",borderRadius:"var(--r8)",padding:"6px 12px"}}>
+            <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:2}}>HARGA SAAT INI</div>
+            <div style={{fontSize:18,fontWeight:800,fontFamily:"var(--mono)",color:"var(--t1)"}}>{priceNarrative.hargaSkrg}</div>
+          </div>}
+          {priceNarrative.trend && <div style={{background:"var(--s3)",border:`1px solid ${trendColor}33`,borderRadius:"var(--r8)",padding:"6px 12px"}}>
+            <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:2}}>TREND</div>
+            <div style={{fontSize:15,fontWeight:700,color:trendColor}}>{priceNarrative.trend}</div>
+          </div>}
+          {priceNarrative.probability && <div style={{background:"var(--s3)",border:"1px solid var(--border)",borderRadius:"var(--r8)",padding:"6px 12px"}}>
+            <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:2}}>PROBABILITY</div>
+            <div style={{fontSize:15,fontWeight:700,color:trendColor}}>{priceNarrative.probability}</div>
+          </div>}
+        </div>
+        {/* Perjalanan Harga */}
+        {priceNarrative.perjalanan?.length>0 && <div>
+          <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:8}}>PERJALANAN HARGA</div>
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {priceNarrative.perjalanan.map((lvl,i)=><div key={i} style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,background:"var(--s3)",border:"1px solid var(--border)",borderRadius:"var(--r8)",padding:"7px 12px",width:"100%"}}>
+                <span style={{fontSize:10,fontWeight:700,fontFamily:"var(--mono)",color:trendColor,flexShrink:0}}>{i+1}</span>
+                <span style={{fontSize:12.5,color:"var(--t1)",lineHeight:1.5}}>{lvl}</span>
+              </div>
+              {i<priceNarrative.perjalanan.length-1 && <div style={{paddingLeft:16,color:"var(--t3)",fontSize:16,lineHeight:"20px",fontFamily:"var(--mono)"}}>↓</div>}
+            </div>)}
+          </div>
+        </div>}
+        {/* Tree */}
+        {priceNarrative.tree && <div style={{background:"var(--s3)",border:"1px solid var(--border-s)",borderRadius:"var(--r8)",padding:"10px 12px"}}>
+          <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:5}}>TREE OF MOVEMENT</div>
+          <div style={{fontSize:12,fontFamily:"var(--mono)",color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{priceNarrative.tree.replace(/→/g," →\n")}</div>
+        </div>}
+        {/* Skenario Gagal */}
+        {priceNarrative.skenarioGagal && <div style={{background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.2)",borderRadius:"var(--r8)",padding:"8px 12px"}}>
+          <div style={{fontSize:9,fontFamily:"var(--mono)",color:"#f87171",letterSpacing:".06em",marginBottom:4}}>SKENARIO GAGAL</div>
+          <div style={{fontSize:12.5,color:"var(--t2)",lineHeight:1.55}}>{priceNarrative.skenarioGagal}</div>
+        </div>}
+        {/* Entry / SL / TP */}
+        <div style={{display:"grid",gap:6}}>
+          {priceNarrative.entry && <div style={{background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.2)",borderRadius:"var(--r8)",padding:"8px 12px"}}>
+            <div style={{fontSize:9,fontFamily:"var(--mono)",color:"#fbbf24",letterSpacing:".06em",marginBottom:3}}>ENTRY</div>
+            <div style={{fontSize:12.5,color:"var(--t1)",fontWeight:600}}>{priceNarrative.entry}</div>
+          </div>}
+          {(priceNarrative.sl||priceNarrative.tp1) && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
+            {[{label:"SL",val:priceNarrative.sl,color:"#f87171"},{label:"TP1",val:priceNarrative.tp1,color:"#34d399"},{label:"TP2",val:priceNarrative.tp2,color:"#34d399"},{label:"TP3",val:priceNarrative.tp3,color:"#34d399"}].map(({label,val,color})=>val?
+              <div key={label} style={{background:"var(--s3)",border:"1px solid var(--border)",borderRadius:"var(--r8)",padding:"6px 8px",textAlign:"center"}}>
+                <div style={{fontSize:9,fontFamily:"var(--mono)",color:"var(--t3)",letterSpacing:".06em",marginBottom:2}}>{label}</div>
+                <div style={{fontSize:12,fontWeight:700,fontFamily:"var(--mono)",color}}>{val}</div>
+              </div>:null
+            )}
+          </div>}
+        </div>
+      </div>
+    </div>}
     {/* Debate summary */}
     {debateSummary && <div className="council-panel" style={{borderColor:"rgba(139,92,246,.2)"}}>
       <div className="lbl" style={{color:"#a78bfa",marginBottom:8}}>RINGKASAN DEBAT</div>
       <div style={{fontSize:12.5,color:"var(--t2)",lineHeight:1.65,whiteSpace:"pre-wrap"}}>{debateSummary.slice(0,400)}{debateSummary.length>400?"…":""}</div>
     </div>}
+    {/* Confluence Score Panel */}
+    <ConfluenceScorePanel
+      confluenceScore={confluenceScore}
+      channelScore={channelScore}
+      pivotScoreStr={pivotScoreStr}
+      swingConfidences={swingConfidences}
+    />
     {/* Individual responses collapsed */}
     <IndividualResponsesSection responses={responses} allProviders={allProviders}/>
   </div>;
@@ -2901,18 +3534,37 @@ function App(){
     setCouncilTimeline(newTimeline);
 
     // Phase 1: all AI answer independently
+    // Build vision-aware user content (include any attached images from chat files)
+    const councilFiles = files.length > 0 ? files : [];
     const phaseResults={};
     await Promise.allSettled(participants.map(async(prov)=>{
       const cfg=configs[prov.id];
       if(!cfg?.key) return;
       const t0=Date.now();
       try{
+        const modelObj=prov.models.find(m=>m.id===cfg.model)||prov.models[0];
+        const isVision=modelObj.vision;
+        let userContent = q;
+        // If vision model and files present, build multipart content
+        if(isVision && councilFiles.length>0){
+          const parts=[];
+          for(const f of councilFiles){
+            if(IMAGE_TYPES.includes(f.type)){
+              try{
+                const b64=await ChatEngine.toBase64(f);
+                parts.push({type:"image_url",image_url:{url:`data:${f.type};base64,${b64}`}});
+              }catch(e){}
+            }
+          }
+          parts.push({type:"text",text:q||"Analisa chart ini dengan SOP GIP v19."});
+          userContent=parts;
+        }
         const body={
           model:cfg.model||prov.models[0].id,
           max_tokens:1024,
           messages:[
             {role:"system",content:COUNCIL_SYSTEM_PROMPT},
-            {role:"user",content:q}
+            {role:"user",content:userContent}
           ]
         };
         const headers={"Content-Type":"application/json","Authorization":`Bearer ${cfg.key}`,...(prov.extraHeaders||{})};
@@ -2994,6 +3646,8 @@ function App(){
     const failPids = participants.filter(p=>phaseResults[p.id]?.error&&!phaseResults[p.id]?.timedOut);
     const majorityTexts = successPids.filter(p=>phaseResults[p.id].verdict===consensus).map(p=>`${phaseResults[p.id].providerName}: ${(phaseResults[p.id].text||"").slice(0,120)}`);
     const minorityPids = successPids.filter(p=>phaseResults[p.id].verdict!==consensus);
+    // Parse Price Narrative from finalDecision
+    const parsedFinal = ReportParser.parse(finalDecision, consensus);
     const parsed = {
       verdict: consensus,
       confidence,
@@ -3012,10 +3666,15 @@ function App(){
       failCount:failPids.length,
       modeUsed:"council",
       parsed,
+      priceNarrative: parsedFinal?.priceNarrative||null,
+      confluenceScore: parsedFinal?.confluenceScore||null,
+      channelScore: parsedFinal?.channelScore||null,
+      pivotScoreStr: parsedFinal?.pivotScoreStr||"",
+      swingConfidences: parsedFinal?.swingConfidences||[],
     });
     setCouncilLoading(false);
     setCouncilTab("session");
-  },[councilInput,councilLoading,hasAnyKey,enabledProviders,councilSelected,configs,allProviders]);
+  },[councilInput,councilLoading,hasAnyKey,enabledProviders,councilSelected,configs,allProviders,files]);
 
   // Config change handler
   function handleConfigChange(nc){
@@ -3037,7 +3696,7 @@ function App(){
         <div style={{textAlign:"center",marginBottom:24}}>
           <div style={{width:48,height:48,borderRadius:14,background:"var(--s2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:22,color:"var(--t2)"}}>◆</div>
           <div style={{fontSize:20,fontWeight:700,letterSpacing:"-.02em",marginBottom:4}}>GIP Fibonacci Inspector</div>
-          <div style={{fontSize:11,color:"var(--t3)",fontFamily:"var(--mono)",letterSpacing:".05em"}}>v12 · FIBONACCI AUDIT · MULTI-AI · AUTO-FALLBACK</div>
+          <div style={{fontSize:11,color:"var(--t3)",fontFamily:"var(--mono)",letterSpacing:".05em"}}>v20 · SCORING ENGINE · CONFLUENCE SCORE · MULTI-AI</div>
         </div>
         <div style={{background:"var(--s2)",border:"1px solid var(--border)",borderRadius:"var(--r12)",padding:"12px 14px",marginBottom:20}}>
           <div style={{fontSize:11,fontWeight:600,color:"var(--t3)",fontFamily:"var(--mono)",letterSpacing:".04em",textTransform:"uppercase",marginBottom:8}}>Auto-Fallback Chain</div>
@@ -3128,7 +3787,7 @@ function App(){
         <div className="inner">
           {isEmpty && <div style={{textAlign:"center",padding:"32px 0 24px",animation:"fadeUp .3s var(--ease)"}}>
             <div style={{display:"inline-flex",alignItems:"center",flexWrap:"wrap",justifyContent:"center",gap:0,background:"var(--s2)",border:"1px solid var(--border)",borderRadius:99,padding:"5px 14px",marginBottom:24,fontSize:10.5,fontFamily:"var(--mono)",fontWeight:500,letterSpacing:".05em"}}>
-              {["FIB CHANNEL","FRESH SWING","FIB RETRACEMENT","GOLDEN POCKET","H4 BIAS","H1","M30","M5","M1"].map((f,i)=><span key={f} style={{display:"flex",alignItems:"center"}}><span style={{color:"var(--t2)",padding:"0 3px"}}>{f}</span>{i<8&&<span style={{color:"var(--t4)"}}>→</span>}</span>)}
+              {["PIVOT","FRESH SWING","FIB CHANNEL","H4 BIAS","H1","M30","S&D","POI+ROUTE","S&R","FIB RETR","M5","M1"].map((f,i)=><span key={f} style={{display:"flex",alignItems:"center"}}><span style={{color:"var(--t2)",padding:"0 3px"}}>{f}</span>{i<11&&<span style={{color:"var(--t4)"}}>→</span>}</span>)}
               <span style={{color:"var(--t4)",padding:"0 4px"}}>⇒</span><span style={{color:"var(--green)",fontWeight:700,padding:"0 3px"}}>AUDIT</span>
             </div>
             <h1 style={{fontSize:"clamp(18px,5vw,25px)",fontWeight:700,letterSpacing:"-.02em",lineHeight:1.25,marginBottom:10}}>
@@ -3184,7 +3843,7 @@ function App(){
             </button>
           </div>
           <div style={{textAlign:"center",fontSize:10,color:"var(--t4)",fontFamily:"var(--mono)",letterSpacing:".04em"}}>
-            Validasi Dulu · Jangan Menebak · Fibonacci Lolos Dulu Baru Entry{enabledProviders.length>1&&` · Fallback: ${enabledProviders.map(p=>p.shortName).join(" → ")}`}
+            Validasi Dulu · Channel Inspector Dulu · Market Route Dulu · Jangan Menebak · Fibonacci Lolos Dulu Baru Entry{enabledProviders.length>1&&` · Fallback: ${enabledProviders.map(p=>p.shortName).join(" → ")}`}
           </div>
         </div>
       </div>
@@ -3277,7 +3936,7 @@ function App(){
           <div style={{display:"flex",gap:8}}>
             <input value={councilInput} onChange={e=>setCouncilInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendCouncil();}}}
-              placeholder="Ajukan untuk audit ke AI Council... (upload chart + tanya apakah Fibonacci Channel & Retracement lo sudah benar)"
+              placeholder="Ajukan untuk audit ke AI Council... (upload chart + tanya: apakah Pivot (2-2) → Fresh Swing → Fibonacci Channel → H4 → H1 → M30 → S&D → Market Route → S&R → Fib Retracement → M5 → M1 analisa lo sudah benar?)"
               className="inp" style={{flex:1,borderColor:"rgba(245,158,11,.25)"}}
               disabled={councilLoading}/>
             <button onClick={sendCouncil} disabled={!councilInput.trim()||councilLoading||!hasAnyKey}
@@ -3298,13 +3957,16 @@ function App(){
             {/* Empty state */}
             {!councilLoading&&!councilResult&&Object.keys(councilResponses).length===0&&<div style={{textAlign:"center",padding:"48px 0",color:"var(--t3)"}}>
               <div style={{fontSize:40,marginBottom:16,opacity:.5}}>⚖</div>
-              <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:"var(--t2)"}}>GIP Fibonacci Inspector — AI Council Audit</div>
-              <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--t3)",maxWidth:440,margin:"0 auto"}}>
-                Semua AI mengaudit Fibonacci Channel dan Retracement lo secara independen.<br/>
-                Menghasilkan satu keputusan audit konsensus berbasis SOP GIP yang identik.
+              <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:"var(--t2)"}}>GIP Fibonacci Inspector v20 — Scoring Engine + Confluence Score + AI Council</div>
+              <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--t3)",maxWidth:480,margin:"0 auto"}}>
+                ENGINE 0: Image Quality → ENGINE 1: Pivot (2-2 Rule) → ENGINE 2: Fresh Swing<br/>
+                ENGINE 3: <strong style={{color:"var(--amber)"}}>Fibonacci Channel Inspection</strong> ← Channel GAGAL = semua diblokir<br/>
+                ENGINE 4: H4 → ENGINE 5: H1 → ENGINE 6: M30 → ENGINE 7: S&amp;D<br/>
+                ENGINE 7B: POI Ranking + <strong style={{color:"var(--accent)"}}>Market Route</strong> → ENGINE 8: S&amp;R<br/>
+                ENGINE 9: Fib Retracement → ENGINE 10: M5 → ENGINE 11: M1 → ENGINE 12: Price Narrative
               </div>
               <div style={{marginTop:24,display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-                {["Apakah Fibonacci Channel saya sudah dari fresh swing yang benar?","Fibonacci Retracement arah SELL — validasi titik 0 dan 100 saya.","Golden Pocket sudah kena, channel valid, apakah semua AI setuju entry?"].map((q,i)=>
+                {["Upload chart H4 — apakah Fibonacci Channel saya sudah dari fresh swing yang benar?","H4 valid, H1 mendukung — apakah M30 struktur dan Supply Demand saya juga benar?","Golden Pocket 61.8 sudah kena, S&D aktif, M5 setup terbentuk — apakah semua AI setuju entry?"].map((q,i)=>
                   <button key={i} onClick={()=>setCouncilInput(q)}
                     style={{padding:"8px 14px",borderRadius:"var(--r8)",background:"var(--s2)",border:"1px solid var(--border)",color:"var(--t2)",fontSize:12,cursor:"pointer",textAlign:"left",maxWidth:260,lineHeight:1.4}}>
                     {q}
